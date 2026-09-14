@@ -32,3 +32,7 @@ Desktop.ini
 ## Nested junk sometimes created by repeated publishes
 **/publish-fix/**/publish*/
 **/publish-form/**/publish*/
+
+# Old deployment zips
+**/*.zip
+
