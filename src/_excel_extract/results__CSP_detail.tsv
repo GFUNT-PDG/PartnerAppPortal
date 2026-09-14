@@ -1,0 +1,36 @@
+﻿row|question|responseText|validation|scoreFormula
+1| equi ed Pa t e  Ce te  Pe missio s|Helpdesk Age t|type=;fo mula1=|
+2|A basic E t a ID accou t will allow the use  to see the Be efits, Custome , I sights a d Membe ship sectio s. The wo k fo  this catego y is do e usi g the Custome  a d I sights catego ies. The basic accou t will show the "Admi iste " data, but  ot custome  list, so the "Helpdesk Age t" pe missio s will allow the use  to see the "Custome " list i  custome  the "Custome " sectio . ||type=;fo mula1=|
+5|Questio s| espo se|type=;fo mula1=|Sco e
+6|P og am Setup Details||type=;fo mula1=|
+7|Is this pa t e  a Di ect o  I di ect CSP?|Di ect CSP|type=3;fo mula1=Di ect CSP,I di ect CSP, ot a CSP|=C7
+8|If I di ect, who is thei  Dist ibuto ?|Pax8|type=;fo mula1=| ot Applicable
+9|Does Pa t e  have a specific segme t?|SME&C|type=;fo mula1=| ot Applicable
+10|How lo g has the Pa t e  bee  a CSP?||type=;fo mula1=| ot Applicable
+11|What is Pa t e 's total 12 mo th CSP  eve ue?||type=;fo mula1=| ot Applicable
+12|Catego y Totals||type=;fo mula1=|=SUM(D7:D11)
+13|Team St uctu e||type=;fo mula1=|
+14|Does Pa t e  have a dedicated lice si g specialist o  team?|Yes|type=3;fo mula1=Please Choose O e,Yes, o|=C14
+15|Custome  Available Optio s||type=;fo mula1=|
+16|Self-Se vice Po tal fo  lice si g cha ges?|Yes|type=3;fo mula1=Please Choose O e,Yes, o|=C16
+17|Automated I voici g?|Yes|type=3;fo mula1=Please Choose O e,Yes, o|=C17
+18|What platfo m does Pa t e  use fo  I voici g?|Yes|type=3;fo mula1=Please Choose O e,Yes, o|=C18
+19|O li e Payme t optio ?|Yes|type=3;fo mula1=Please Choose O e,Yes, o|=C19
+20|Automatic Payme ts?|Yes|type=3;fo mula1=Please Choose O e,Yes, o|=C20
+21|Does Pa t e  offe  i te  al suppo t?|Yes|type=3;fo mula1=Please Choose O e,Yes, o|=C21
+22|Is suppo t capability i teg ated with the self-se vice po tal?|Yes|type=3;fo mula1=Please Choose O e,Yes, o|=C22
+23|Custome  Suppo t Details||type=;fo mula1=|
+24|Does Pa te  have a Mic osoft Suppo t Ag eeme t?|P emie  Suppo t|type=3;fo mula1=Please Choose O e,P emie  Suppo t,Adva ced Suppo t, o e|=C24
+25|Does Pa t e  offe  a y custom se vices o  top of lice si g?|Yes|type=3;fo mula1=Please Choose O e,Yes, o|=C25
+26|Sales & G owth Details||type=;fo mula1=|
+27|How ma y custome s does Pa t e  have u de  CSP?|40|type=;fo mula1=| ot Applicable
+28| et  ew custome s i  the past 3 mo ths|1|type=;fo mula1=| ot Applicable
+29| et  ew custome s i  the past 6 mo ths|-4|type=;fo mula1=| ot Applicable
+30| et  ew custome s i  the past 12 mo ths|29|type=;fo mula1=|=IF(C30<=20%,4,IF(A D(C30>20%,C30<41%),8,IF(A D(C30>40%,C30<61%),12,IF(A D(C30>60%,C30<81%),16,IF(A D(C30>80%,C30<=100%),20,"")))))
+31| et  ew custome s i  the past 24 mo ths|40|type=;fo mula1=| ot Applicable
+32|What is the ave age Commitme t le gth?|3-yea  Commit|type=3;fo mula1=Please Choose O e,Mo thly Commit,Yea ly Commit,3-yea  Commit|=C32
+33|What is the ave age CSP Custome  te u e?|3 o  Mo e Yea s|type=3;fo mula1=Please Choose O e,1 yea  o  less,2 Yea s,3 o  Mo e Yea s|=C33
+35|Total Poi ts Ea  ed||type=;fo mula1=|=SUM(D7:D11)+D14+SUM(D16:D22)+SUM(D24:D25)+SUM(D27:D33)
+36|Pa t e  P og ess Sco e fo  CSP||type=;fo mula1=|=D35/100*100%
+40|Sales G owth Pe ce tage|Past 3 Mo th G owth|type=;fo mula1=|
+45|Pote tial Sco e||type=;fo mula1=|1

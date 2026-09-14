@@ -1,0 +1,53 @@
+@page "/partner/specializations/{Slug}"
+@using PartnerAppPortal.Portal.Services
+
+<div class="portal-page partner-portal">
+    <div class="eyebrow">Partner Portal</div>
+
+    @if (Item is null)
+    {
+        <h1 class="portal-title">Specialization</h1>
+        <p class="portal-subtitle">This specialization page was not found.</p>
+        <div class="portal-panel">
+            <a class="btn btn-primary portal-btn" href="@BackHref">Back to Partner Dashboard</a>
+        </div>
+    }
+    else
+    {
+        <h1 class="portal-title">@Item.Title</h1>
+        <p class="portal-subtitle">Advanced Specialization details</p>
+
+        <div class="spec-detail-card">
+            <div class="uc-banner">Under construction</div>
+            <p class="spec-detail-copy">
+                Requirements, eligibility, and guidance for <strong>@Item.Title</strong> will appear here.
+            </p>
+            <ul class="spec-detail-list">
+                <li>Overview — coming soon</li>
+                <li>Requirements — coming soon</li>
+                <li>Recommended actions — coming soon</li>
+                <li>Reference documentation — coming soon</li>
+            </ul>
+            <a class="btn btn-primary portal-btn spec-detail-back" href="@BackHref">Back to Partner Dashboard</a>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    [SupplyParameterFromQuery(Name = "customerId")]
+    public Guid? CustomerId { get; set; }
+
+    private SpecializationCatalog.Item? Item { get; set; }
+
+    private string BackHref =>
+        CustomerId is Guid id && id != Guid.Empty
+            ? $"/dashboard/partner?customerId={id}"
+            : "/dashboard/partner";
+
+    protected override void OnParametersSet()
+    {
+        Item = SpecializationCatalog.FindBySlug(Slug);
+    }
+}

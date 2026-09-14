@@ -1,0 +1,107 @@
+@inherits PartnerAppPortal.Portal.Pages.Wizard.WizardStepBase
+@using System.Linq
+@using PartnerAppPortal.Core.Models.Assessments
+@inject IAssessmentApiClient AssessmentApi
+
+<h3>@Title</h3>
+
+@if (!string.IsNullOrEmpty(LoadError))
+{
+    <p class="text-warning">@LoadError</p>
+}
+
+@if (Questions == null)
+{
+    <p>Loading advanced specialization questions...</p>
+}
+else if (!Questions.Any())
+{
+    <p class="text-muted">No questions are configured for this section yet. You can continue.</p>
+    <button class="btn btn-secondary" @onclick="Back">Back</button>
+    <button class="btn btn-primary" @onclick="Next">Next</button>
+}
+else
+{
+    @foreach (var q in Questions)
+    {
+        <div class="mb-3">
+            <label><strong>@q.QuestionText</strong></label>
+
+            @{
+                var answerType = q.ResponseType ?? q.AnswerType;
+            }
+
+            @if (string.Equals(answerType, "YesNo", StringComparison.OrdinalIgnoreCase))
+            {
+                <select class="form-control" @bind="q.Response">
+                    <option value="">Select...</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            }
+            else
+            {
+                <input class="form-control" @bind="q.Response" />
+            }
+        </div>
+    }
+
+    <button class="btn btn-secondary" @onclick="Back">Back</button>
+    <button class="btn btn-primary" @onclick="Next">Next</button>
+}
+
+@code {
+    public List<AssessmentQuestion>? Questions { get; set; }
+    private string? LoadError { get; set; }
+
+    protected override string Section => "Advanced_Specializations";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Title = "Advanced Specializations";
+
+        try
+        {
+            Questions = (await AssessmentApi.GetQuestionsBySectionAsync(Section)).ToList();
+
+            foreach (var q in Questions)
+            {
+                if (string.IsNullOrWhiteSpace(q.ResponseType))
+                    q.ResponseType = q.AnswerType;
+            }
+
+            if (!Questions.Any())
+                return;
+
+            var existing = await AssessmentApi.GetAnswersByAssessmentAsync(State.AssessmentId);
+            foreach (var q in Questions)
+            {
+                var match = existing.FirstOrDefault(x =>
+                    string.Equals(x.QuestionId, q.QuestionId, StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                    q.Response = match.Response;
+            }
+        }
+        catch (Exception ex)
+        {
+            LoadError = $"Could not load questions: {ex.Message}";
+            Questions = new();
+        }
+    }
+
+    private async Task Next()
+    {
+        try
+        {
+            if (Questions?.Any() == true)
+                await AssessmentApi.SaveScoresAsync(State.AssessmentId, Questions);
+        }
+        catch
+        {
+        }
+
+        await OnNext.InvokeAsync();
+    }
+
+    private async Task Back() => await OnBack.InvokeAsync();
+}

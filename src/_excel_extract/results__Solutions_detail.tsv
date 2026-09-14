@@ -1,0 +1,61 @@
+﻿row|question|responseText|responseFormula|resultText|resultFormula|scoreText|scoreFormula|validation
+1|Questio s| espo se| espo se| esult| esult|Sco e|Sco e|
+2|Pa t e  Membe ship E  ollme t|||||||
+3|Is Pa t e  e  olled i  a y Solutio s Desig atio s?|Yes|Yes|4|=IF(O (B3="Yes"),4,IF(O (B3=" o"),0,IF(O (B3="Please Choose O e"),"Select F om Left")))|4|=C3|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+4|Is Pa t e  e  olled i  a y Adva ced Specializatio s?| o| o|0|=IF(O (B4="Yes"),4,IF(O (B4=" o"),0,IF(O (B4="Please Choose O e"),"Select F om Left")))|0|=C4|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+5|Solutio s Desig atio s|||||||
+6|Does Pa t e  have the Busi ess Applicatio s Desig atio ?| o| o|0|=IF(O (B6="Yes"),5,IF(O (B6=" o"),0,IF(O (B6="Please Choose O e"),"Select F om Left")))|0|=C6|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+7|What is the cu  e t Desig atio  Sco e?|50|50|50%|=MI (1,B7/100)|3|=IF(A D(C7<=29%,C7>0%),1,IF(A D(C7>29%,C7<50%),2,IF(A D(C7>49%,C7<70%),3,IF(A D(C7>69%,C7<90%),4,IF(A D(C7>89%,C7<=100%),5,"0")))))|
+8|Is Pa t e  goi g to ta get the Busi ess Applicatio s Desig atio ?| o| o|10|=IF(O (B8=" o"),10,IF(O (B8="Yes"),0,IF(O (B8="Please Choose O e"),"Select F om Left")))|10|=C8|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+9|Does Pa t e  have the Data & AI Desig atio ?| o| o|0|=IF(O (B9="Yes"),5,IF(O (B9=" o"),0,IF(O (B9="Please Choose O e"),"Select F om Left")))|0|=C9|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+10|What is the cu  e t Desig atio  Sco e?|0|0|0%|=MI (1,B10/100)|0|=IF(A D(C10<=29%,C10>0%),1,IF(A D(C10>29%,C10<50%),2,IF(A D(C10>49%,C10<70%),3,IF(A D(C10>69%,C10<90%),4,IF(A D(C10>89%,C10<=100%),5,"0")))))|
+11|Is Pa t e  goi g to ta get the Data & AI Desig atio ?|Yes|Yes|0|=IF(O (B11=" o"),10,IF(O (B11="Yes"),0,IF(O (B11="Please Choose O e"),"Select F om Left")))|0|=C11|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+12|Does Pa t e  have the Digital & App I  ovatio  Desig atio ?| o| o|0|=IF(O (B12="Yes"),5,IF(O (B12=" o"),0,IF(O (B12="Please Choose O e"),"Select F om Left")))|0|=C12|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+13|What is the cu  e t Desig atio  Sco e?|0|0|0%|=MI (1,B13/100)|0|=IF(A D(C13<=29%,C13>0%),1,IF(A D(C13>29%,C13<50%),2,IF(A D(C13>49%,C13<70%),3,IF(A D(C13>69%,C13<90%),4,IF(A D(C13>89%,C13<=100%),5,"0")))))|
+14|Is Pa t e  goi g to ta get the Digital & App i  ovatio  Desig atio ?|Yes|Yes|0|=IF(O (B14=" o"),10,IF(O (B14="Yes"),0,IF(O (B14="Please Choose O e"),"Select F om Left")))|0|=C14|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+15|Does Pa t e  have the I f ast uctu e Desig atio ?| o| o|0|=IF(O (B15="Yes"),5,IF(O (B15=" o"),0,IF(O (B15="Please Choose O e"),"Select F om Left")))|0|=C15|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+16|What is the cu  e t Desig atio  Sco e?|0|0|0%|=MI (1,B16/100)|0|=IF(A D(C16<=29%,C16>0%),1,IF(A D(C16>29%,C16<50%),2,IF(A D(C16>49%,C16<70%),3,IF(A D(C16>69%,C16<90%),4,IF(A D(C16>89%,C16<=100%),5,"0")))))|
+17|Is Pa t e  goi g to ta get the I f ast uctu e Desig atio ?|Yes|Yes|0|=IF(O (B17=" o"),10,IF(O (B17="Yes"),0,IF(O (B17="Please Choose O e"),"Select F om Left")))|0|=C17|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+18|Does Pa t e  have the Mode   Wo k Desig atio ?|Yes|Yes|5|=IF(O (B18="Yes"),5,IF(O (B18=" o"),0,IF(O (B18="Please Choose O e"),"Select F om Left")))|5|=C18|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+19|What is the cu  e t Desig atio  Sco e?|0|0|0%|=MI (1,B19/100)|0|=IF(A D(C19<=29%,C19>0%),1,IF(A D(C19>29%,C19<50%),2,IF(A D(C19>49%,C19<70%),3,IF(A D(C19>69%,C19<90%),4,IF(A D(C19>89%,C19<=100%),5,"0")))))|
+20|Is Pa t e  goi g to ta get the Mode   Wo k Desig atio ?|Yes|Yes|0|=IF(O (B20=" o"),10,IF(O (B20="Yes"),0,IF(O (B20="Please Choose O e"),"Select F om Left")))|0|=C20|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+21|Does Pa t e  have the Secu ity Desig atio ?| o| o|0|=IF(O (B21="Yes"),5,IF(O (B21=" o"),0,IF(O (B21="Please Choose O e"),"Select F om Left")))|0|=C21|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+22|What is the cu  e t Desig atio  Sco e?|0|0|0%|=MI (1,B22/100)|0|=IF(A D(C22<=29%,C22>0%),1,IF(A D(C22>29%,C22<50%),2,IF(A D(C22>49%,C22<70%),3,IF(A D(C22>69%,C22<90%),4,IF(A D(C22>89%,C22<=100%),5,"0")))))|
+23|Is Pa t e  goi g to ta get the Secu ity Desig atio ?|Yes|Yes|0|=IF(O (B23=" o"),10,IF(O (B23="Yes"),0,IF(O (B23="Please Choose O e"),"Select F om Left")))|0|=C23|type=3;fo mula1=Please Choose O e,Yes, o,  /A
+24|Adva ced Specializatio s|||||||
+25|Does Pa t e  have the AI Platfo m o  Mic osoft Azu e Adva ced Specializatio ?| o| o|0|=IF(O (B25="Yes"),1,IF(O (B25=" o"),0,IF(O (B25="Please Choose O e"),"Select F om Left")))|0|=C25|type=3;fo mula1=Please Choose O e,Yes, o
+26|Does Pa t e  have the A alytics o  Mic osoft Azu e Adva ced Specializatio ?| o| o|0|=IF(O (B26="Yes"),1,IF(O (B26=" o"),0,IF(O (B26="Please Choose O e"),"Select F om Left")))|0|=C26|type=3;fo mula1=Please Choose O e,Yes, o
+27|Does Pa t e  have the Age tic DevOps with Mic osoft Azu e a d GitHub Adva ced Specializatio ?| o| o|0|=IF(O (B27="Yes"),1,IF(O (B27=" o"),0,IF(O (B27="Please Choose O e"),"Select F om Left")))|0|=C27|type=3;fo mula1=Please Choose O e,Yes, o
+28|Does Pa t e  have the Hyb id Cloud I f ast uctu e with Mic osoft Azu e Stack HCI Adva ced Specializatio ?| o| o|0|=IF(O (B28="Yes"),1,IF(O (B28=" o"),0,IF(O (B28="Please Choose O e"),"Select F om Left")))|0|=C28|type=3;fo mula1=Please Choose O e,Yes, o
+29|Does Pa t e  have the  etwo ki g Se vices i  Mic osoft Azu e Adva ced Specializatio ?| o| o|0|=IF(O (B29="Yes"),1,IF(O (B29=" o"),0,IF(O (B29="Please Choose O e"),"Select F om Left")))|0|=C29|type=3;fo mula1=Please Choose O e,Yes, o
+30|Does Pa t e  have the Mic osoft Azu e VMwa e Solutio  Adva ced Specializatio ?| o| o|0|=IF(O (B30="Yes"),1,IF(O (B30=" o"),0,IF(O (B30="Please Choose O e"),"Select F om Left")))|0|=C30|type=3;fo mula1=Please Choose O e,Yes, o
+31|Does Pa t e  have the AI Apps o  Mic osoft Azu e Adva ced Specializatio ?| o| o|0|=IF(O (B31="Yes"),1,IF(O (B31=" o"),0,IF(O (B31="Please Choose O e"),"Select F om Left")))|0|=C31|type=3;fo mula1=Please Choose O e,Yes, o
+32|Does Pa t e  have the Data Wa ehouse Mig atio  to Mic osoft Azu e Adva ced Specializatio ?| o| o|0|=IF(O (B32="Yes"),1,IF(O (B32=" o"),0,IF(O (B32="Please Choose O e"),"Select F om Left")))|0|=C32|type=3;fo mula1=Please Choose O e,Yes, o
+33|Does Pa t e  have the I f a a d Database Mig atio  to Mic osoft Azu e Adva ced Specializatio ?| o| o|0|=IF(O (B33="Yes"),1,IF(O (B33=" o"),0,IF(O (B33="Please Choose O e"),"Select F om Left")))|0|=C33|type=3;fo mula1=Please Choose O e,Yes, o
+34|Does Pa t e  have the Kube  etes o  Mic osoft Azu e Adva ced Specializatio ?| o| o|0|=IF(O (B34="Yes"),1,IF(O (B34=" o"),0,IF(O (B34="Please Choose O e"),"Select F om Left")))|0|=C34|type=3;fo mula1=Please Choose O e,Yes, o
+35|Does Pa t e  have the Mig ate E te p ise Apps to Mic osoft Azu e Adva ced Specializatio ?| o| o|0|=IF(O (B35="Yes"),1,IF(O (B35=" o"),0,IF(O (B35="Please Choose O e"),"Select F om Left")))|0|=C35|type=3;fo mula1=Please Choose O e,Yes, o
+36|Does Pa t e  have the SAP o  Mic osoft Azu e Adva ced Specializatio ?| o| o|0|=IF(O (B36="Yes"),1,IF(O (B36=" o"),0,IF(O (B36="Please Choose O e"),"Select F om Left")))|0|=C36|type=3;fo mula1=Please Choose O e,Yes, o
+37|Does Pa t e  have the Mic osoft Azu e Vi tual Desktop Adva ced Specializatio ?| o| o|0|=IF(O (B37="Yes"),1,IF(O (B37=" o"),0,IF(O (B37="Please Choose O e"),"Select F om Left")))|0|=C37|type=3;fo mula1=Please Choose O e,Yes, o
+38|Does Pa t e  have the Fi a ce Adva ced Specializatio ?| o| o|0|=IF(O (B38="Yes"),1,IF(O (B38=" o"),0,IF(O (B38="Please Choose O e"),"Select F om Left")))|0|=C38|type=3;fo mula1=Please Choose O e,Yes, o
+39|Does Pa t e  have the Mic osoft Low Code Applicatio  Developme t Adva ced Specializatio ?| o| o|0|=IF(O (B39="Yes"),1,IF(O (B39=" o"),0,IF(O (B39="Please Choose O e"),"Select F om Left")))|0|=C39|type=3;fo mula1=Please Choose O e,Yes, o
+40|Does Pa t e  have the I tellige t Automatio  Adva ced Specializatio ?| o| o|0|=IF(O (B40="Yes"),1,IF(O (B40=" o"),0,IF(O (B40="Please Choose O e"),"Select F om Left")))|0|=C40|type=3;fo mula1=Please Choose O e,Yes, o
+41|Does Pa t e  have the Busi ess I tellige ce Adva ced Specializatio ?| o| o|0|=IF(O (B41="Yes"),1,IF(O (B41=" o"),0,IF(O (B41="Please Choose O e"),"Select F om Left")))|0|=C41|type=3;fo mula1=Please Choose O e,Yes, o
+42|Does Pa t e  have the Sales Adva ced Specializatio ?| o| o|0|=IF(O (B42="Yes"),1,IF(O (B42=" o"),0,IF(O (B42="Please Choose O e"),"Select F om Left")))|0|=C42|type=3;fo mula1=Please Choose O e,Yes, o
+43|Does Pa t e  have the Se vice Adva ced Specializatio ?| o| o|0|=IF(O (B43="Yes"),1,IF(O (B43=" o"),0,IF(O (B43="Please Choose O e"),"Select F om Left")))|0|=C43|type=3;fo mula1=Please Choose O e,Yes, o
+44|Does Pa t e  have the Small a d Midsize Busi ess Ma ageme t Adva ced Specializatio ?| o| o|0|=IF(O (B44="Yes"),1,IF(O (B44=" o"),0,IF(O (B44="Please Choose O e"),"Select F om Left")))|0|=C44|type=3;fo mula1=Please Choose O e,Yes, o
+45|Does Pa t e  have the Supply Chai  Adva ced Specializatio ?| o| o|0|=IF(O (B45="Yes"),1,IF(O (B45=" o"),0,IF(O (B45="Please Choose O e"),"Select F om Left")))|0|=C45|type=3;fo mula1=Please Choose O e,Yes, o
+46|Does Pa t e  have the Adoptio  a d Cha ge Ma ageme t Adva ced Specializatio ?| o| o|0|=IF(O (B46="Yes"),1,IF(O (B46=" o"),0,IF(O (B46="Please Choose O e"),"Select F om Left")))|0|=C46|type=3;fo mula1=Please Choose O e,Yes, o
+47|Does Pa t e  have the Calli g fo  Mic osoft Teams Adva ced Specializatio ?| o| o|0|=IF(O (B47="Yes"),1,IF(O (B47=" o"),0,IF(O (B47="Please Choose O e"),"Select F om Left")))|0|=C47|type=3;fo mula1=Please Choose O e,Yes, o
+48|Does Pa t e  have the Copilot Adva ced Specializatio ?| o| o|0|=IF(O (B48="Yes"),1,IF(O (B48=" o"),0,IF(O (B48="Please Choose O e"),"Select F om Left")))|0|=C48|type=3;fo mula1=Please Choose O e,Yes, o
+49|Does Pa t e  have the Custom Teams Solutio s Adva ced Specializatio  Adva ced Specializatio ?| o| o|0|=IF(O (B49="Yes"),1,IF(O (B49=" o"),0,IF(O (B49="Please Choose O e"),"Select F om Left")))|0|=C49|type=3;fo mula1=Please Choose O e,Yes, o
+50|Does Pa t e  have the Meeti gs a d Meeti g  ooms fo  Mic osoft Teams Adva ced Specializatio ?| o| o|0|=IF(O (B50="Yes"),1,IF(O (B50=" o"),0,IF(O (B50="Please Choose O e"),"Select F om Left")))|0|=C50|type=3;fo mula1=Please Choose O e,Yes, o
+51|Does Pa t e  have the Mode  ize E d Poi ts Adva ced Specializatio ?| o| o|0|=IF(O (B51="Yes"),1,IF(O (B51=" o"),0,IF(O (B51="Please Choose O e"),"Select F om Left")))|0|=C51|type=3;fo mula1=Please Choose O e,Yes, o
+52|Does Pa t e  have the Teamwo k Deployme t Adva ced Specializatio ?| o| o|0|=IF(O (B52="Yes"),1,IF(O (B52=" o"),0,IF(O (B52="Please Choose O e"),"Select F om Left")))|0|=C52|type=3;fo mula1=Please Choose O e,Yes, o
+53|Does Pa t e  have the Cloud Secu ity Adva ced Specializatio ?| o| o|0|=IF(O (B53="Yes"),1,IF(O (B53=" o"),0,IF(O (B53="Please Choose O e"),"Select F om Left")))|0|=C53|type=3;fo mula1=Please Choose O e,Yes, o
+54|Does Pa t e  have the Ide tity a d Access Ma ageme t Adva ced Specializatio ?| o| o|0|=IF(O (B54="Yes"),1,IF(O (B54=" o"),0,IF(O (B54="Please Choose O e"),"Select F om Left")))|0|=C54|type=3;fo mula1=Please Choose O e,Yes, o
+55|Does Pa t e  have the Data Secu ity Adva ced Specializatio ?| o| o|0|=IF(O (B55="Yes"),1,IF(O (B55=" o"),0,IF(O (B55="Please Choose O e"),"Select F om Left")))|0|=C55|type=3;fo mula1=Please Choose O e,Yes, o
+56|Does Pa t e  have the Th eat P otectio  Adva ced Specializatio ?| o| o|0|=IF(O (B56="Yes"),1,IF(O (B56=" o"),0,IF(O (B56="Please Choose O e"),"Select F om Left")))|0|=C56|type=3;fo mula1=Please Choose O e,Yes, o
+57|Custome  Details|||||||
+59|Total Poi ts Ea  ed|||||22|=SUM(D3:D4)+SUM(D6:D23)+SUM(D25:D56)|
+60|Pa t e  P og ess Sco e|||||22%|=D59/100*100%|
+61|Pote tial Sco e|||||100%|1|

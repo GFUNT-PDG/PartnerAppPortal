@@ -1,0 +1,39 @@
+﻿### SHEET: Customer & CSP Workbook usedRows=45 usedCols=4 preview=45x4
+Required Partner Center Permissions | Helpdesk Agent |  | 
+A basic Entra ID account will allow the user to see the Benefits, Customer, Insi... |  |  | 
+Questions | Response | Result | Score
+Program Setup Details |  |  | 
+Is this partner a Direct or Indirect CSP? | Direct CSP | =IF(OR(B7="Direct CSP"),10,IF(OR(B7="Indirect CSP"),5,IF(OR(B7="Not a CSP"),0))) | =C7
+If Indirect, who is their Distributor? | Pax8 |  | Not Applicable
+Does Partner have a specific segment? | SME&C |  | Not Applicable
+How long has the Partner been a CSP? |  |  | Not Applicable
+What is Partner's total 12 month CSP revenue? |  |  | Not Applicable
+Category Totals |  |  | =SUM(D7:D11)
+Team Structure |  |  | 
+Does Partner have a dedicated licensing specialist or team? | Yes | =IF(OR(B14="Yes"),5,IF(OR(B14="No"),0,IF(OR(B14="Please Choose One"),"Select Fro... | =C14
+Customer Available Options |  |  | 
+Self-Service Portal for licensing changes? | Yes | =IF(OR(B16="Yes"),5,IF(OR(B16="No"),0,IF(OR(B16="Please Choose One"),"Select Fro... | =C16
+Automated Invoicing? | Yes | =IF(OR(B17="Yes"),5,IF(OR(B17="No"),0,IF(OR(B17="Please Choose One"),"Select Fro... | =C17
+What platform does Partner use for Invoicing? | Yes | =IF(OR(B18="Yes"),5,IF(OR(B18="No"),0,IF(OR(B18="Please Choose One"),"Select Fro... | =C18
+Online Payment option? | Yes | =IF(OR(B19="Yes"),5,IF(OR(B19="No"),0,IF(OR(B19="Please Choose One"),"Select Fro... | =C19
+Automatic Payments? | Yes | =IF(OR(B20="Yes"),5,IF(OR(B20="No"),0,IF(OR(B20="Please Choose One"),"Select Fro... | =C20
+Does Partner offer internal support? | Yes | =IF(OR(B21="Yes"),5,IF(OR(B21="No"),0,IF(OR(B21="Please Choose One"),"Select Fro... | =C21
+Is support capability integrated with the self-service portal? | Yes | =IF(OR(B22="Yes"),5,IF(OR(B22="No"),0,IF(OR(B22="Please Choose One"),"Select Fro... | =C22
+Customer Support Details |  |  | 
+Does Parter have a Microsoft Support Agreement? | Premier Support | =IF(OR(B24="Premier Support"),10,IF(OR(B24="Advanced Support"),5,IF(OR(B24="Plea... | =C24
+Does Partner offer any custom services on top of licensing? | Yes | =IF(OR(B25="Yes"),5,IF(OR(B25="No"),0,IF(OR(B25="Please Choose One"),"Select Fro... | =C25
+Sales & Growth Details |  |  | 
+How many customers does Partner have under CSP? | 40 |  | Not Applicable
+Net new customers in the past 3 months | 1 |  | Not Applicable
+Net new customers in the past 6 months | -4 |  | Not Applicable
+Net new customers in the past 12 months | 29 | =MIN(1,B30/20)*100% | =IF(C30<=20%,4,IF(AND(C30>20%,C30<41%),8,IF(AND(C30>40%,C30<61%),12,IF(AND(C30>6...
+Net new customers in the past 24 months | 40 |  | Not Applicable
+What is the average Commitment length? | 3-year Commit | =IF(OR(B32="Monthly Commit"),5,IF(OR(B32="Yearly Commit"),10,IF(OR(B32="Please C... | =C32
+What is the average CSP Customer tenure? | 3 or More Years | =IF(OR(B33="1 year or less"),1,IF(OR(B33="2 Years"),3,IF(OR(B33="Please Choose O... | =C33
+Total Points Earned |  |  | =SUM(D7:D11)+D14+SUM(D16:D22)+SUM(D24:D25)+SUM(D27:D33)
+Partner Progress Score for CSP |  |  | =D35/100*100%
+Sales Growth Percentage | Past 3 Month Growth | =(B29-B28)/B28 | 
+ | Past 6 Month Growth | =(B30-B29)/B29 | 
+ | Past 12 Month Growth | =(B31-B30)/B30 | 
+ | Past 24 Month Growth | =(B31-B30)/B30 | 
+Potential Score |  |  | 1

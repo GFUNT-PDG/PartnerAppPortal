@@ -1,0 +1,18 @@
+﻿---
+description: Deploy PartnerAppPortal only via publish-fix folders
+alwaysApply: true
+---
+
+# Publish output
+
+Always publish and deploy from **`publish-fix`** (not `publish-form`, `publish`, or `publishcd`):
+
+- API: `C:\PartnerAppPortal\src\Api\publish-fix`
+- Portal: `C:\PartnerAppPortal\src\Portal\publish-fix`
+
+```powershell
+dotnet publish Api\Api.csproj -c Release -o Api\publish-fix
+dotnet publish Portal\Portal.csproj -c Release -o Portal\publish-fix
+```
+
+Do not use or recommend `publish-form` for Azure deploys.

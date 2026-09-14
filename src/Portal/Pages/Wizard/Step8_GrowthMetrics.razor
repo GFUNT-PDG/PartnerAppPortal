@@ -1,0 +1,89 @@
+@inherits PartnerAppPortal.Portal.Pages.Wizard.WizardStepBase
+@using PartnerAppPortal.Core.Models.Assessments
+@inject IAssessmentApiClient AssessmentApi
+
+<h3>@Title</h3>
+
+@if (!string.IsNullOrEmpty(Error))
+{
+    <p class="text-danger">@Error</p>
+}
+
+@if (Growth == null)
+{
+    <p>Loading growth metrics...</p>
+}
+else
+{
+    <div class="mb-3">
+        <label>Year-over-Year Growth (%)</label>
+        <input type="number"
+               class="form-control"
+               @bind="Growth.YearOverYear" />
+    </div>
+
+    <div class="mb-3">
+        <label>Customer Adds</label>
+        <input type="number"
+               class="form-control"
+               @bind="Growth.CustomerAdds" />
+    </div>
+
+    <div class="mb-3">
+        <label>Revenue Growth (%)</label>
+        <input type="number"
+               class="form-control"
+               @bind="Growth.RevenueGrowth" />
+    </div>
+
+    <div class="mb-3">
+        <label>Pipeline Growth (%)</label>
+        <input type="number"
+               class="form-control"
+               @bind="Growth.PipelineGrowth" />
+    </div>
+
+    <button class="btn btn-secondary" @onclick="Back">Back</button>
+    <button class="btn btn-primary" @onclick="Next">Next</button>
+}
+
+@code {
+    public GrowthMetrics? Growth { get; set; }
+    private string? Error { get; set; }
+
+    protected override string Section => "Growth_Metrics";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Title = "Growth Metrics";
+
+        try
+        {
+            Growth = await AssessmentApi.GetGrowthMetricsAsync(State.AssessmentId)
+                     ?? new GrowthMetrics();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Could not load growth metrics: {ex.Message}";
+            Growth = new GrowthMetrics();
+        }
+    }
+
+    private async Task Next()
+    {
+        try
+        {
+            await AssessmentApi.SaveGrowthMetricsAsync(State.AssessmentId, Growth!);
+            await OnNext.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Save failed: {ex.Message}";
+        }
+    }
+
+    private async Task Back()
+    {
+        await OnBack.InvokeAsync();
+    }
+}

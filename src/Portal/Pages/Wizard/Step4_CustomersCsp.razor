@@ -1,0 +1,95 @@
+@inherits PartnerAppPortal.Portal.Pages.Wizard.WizardStepBase
+@using PartnerAppPortal.Core.Models.Assessments
+@inject IAssessmentApiClient AssessmentApi
+
+<h3>@Title</h3>
+
+@if (!string.IsNullOrEmpty(Error))
+{
+    <p class="text-danger">@Error</p>
+}
+
+@if (Csp == null)
+{
+    <p>Loading CSP information...</p>
+}
+else
+{
+    <div class="mb-3">
+        <label>CSP Tier</label>
+        <input class="form-control"
+               @bind="Csp.CspTier" />
+    </div>
+
+    <div class="mb-3">
+        <label>Active Subscriptions</label>
+        <input type="number"
+               class="form-control"
+               @bind="Csp.ActiveSubscriptions" />
+    </div>
+
+    <div class="mb-3">
+        <label>Azure Consumption (monthly)</label>
+        <input type="number"
+               class="form-control"
+               @bind="Csp.AzureConsumption" />
+    </div>
+
+    <div class="mb-3">
+        <label>Marketplace Usage</label>
+        <input type="number"
+               class="form-control"
+               @bind="Csp.MarketplaceUsage" />
+    </div>
+
+    <div class="mb-3">
+        <label>Incentives Usage</label>
+        <input type="number"
+               class="form-control"
+               @bind="Csp.IncentivesUsage" />
+    </div>
+
+    <button class="btn btn-secondary" @onclick="Back">Back</button>
+    <button class="btn btn-primary" @onclick="Next">Next</button>
+}
+
+@code {
+    public CustomersCsp? Csp { get; set; }
+    private string? Error { get; set; }
+
+    protected override string Section => "Customers_CSP";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Title = "Customers & CSP";
+
+        try
+        {
+            Csp = await AssessmentApi.GetCustomersCspAsync(State.AssessmentId)
+                  ?? new CustomersCsp();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Could not load CSP info: {ex.Message}";
+            Csp = new CustomersCsp();
+        }
+    }
+
+    private async Task Next()
+    {
+        try
+        {
+            await AssessmentApi.SaveCustomersCspAsync(State.AssessmentId, Csp!);
+            await OnNext.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Save failed: {ex.Message}";
+        }
+    }
+
+    private async Task Back()
+    {
+        await OnBack.InvokeAsync();
+    }
+}

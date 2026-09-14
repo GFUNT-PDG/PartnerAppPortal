@@ -1,0 +1,50 @@
+{
+  "flowName": "CrmSync-Accounts",
+  "description": "Reference blueprint for rebuilding the Power Automate CrmSync flow. Import of raw JSON into Power Automate usually requires remapping connections — prefer REBUILD-GUIDE.txt for first-time setup.",
+  "sqlProcedure": "[dbo].[UpsertCrmAccount]",
+  "sqlServer": "pacappsql01.database.windows.net",
+  "sqlDatabase": "pacappdb01",
+  "structure": [
+    "Recurrence",
+    "List_rows_Accounts (Dataverse Accounts)",
+    "Apply_to_each (value)",
+    "  Condition Has_Primary_Contact",
+    "    YES: Get_Primary_Contact (Contacts by primarycontactid)",
+    "    YES: Upsert_Account_With_Contact (SQL UpsertCrmAccount)",
+    "    NO:  Upsert_Account_Only (SQL UpsertCrmAccount)"
+  ],
+  "listRowsAccounts": {
+    "table": "accounts",
+    "selectColumns": "accountid,name,primarycontactid,emailaddress1,telephone1,modifiedon,cr3f8_accountexecutive,cr3f8_developmentdirector,cr3f8_customerexperiencecx",
+    "selectColumnsNote": "Replace cr3f8_* with the exact logical names from your old flow if different.",
+    "filterRowsFullBackfill": "modifiedon gt 1900-01-01T00:00:00Z",
+    "filterRowsIncremental": "modifiedon gt @{addDays(utcNow(), -7)}"
+  },
+  "expressions": {
+    "primaryContactName": "trim(concat(coalesce(outputs('Get_Primary_Contact')?['body/firstname'], ''), ' ', coalesce(outputs('Get_Primary_Contact')?['body/lastname'], '')))",
+    "emailPreferContact": "coalesce(outputs('Get_Primary_Contact')?['body/emailaddress1'], items('Apply_to_each')?['emailaddress1'])",
+    "syncedOn": "utcNow()"
+  },
+  "upsertYesBranch": {
+    "AccountId": "accountid from current Account",
+    "Name": "name from current Account",
+    "PrimaryContact": "EXPRESSION primaryContactName",
+    "AccountExecutive": "cr3f8 account executive field",
+    "DevelopmentDirector": "cr3f8 development director field",
+    "CustomerExperienceCx": "cr3f8 customer experience field",
+    "Email": "EXPRESSION emailPreferContact",
+    "Phone": "telephone1 from current Account",
+    "ModifiedOn": "modifiedon from current Account",
+    "SyncedOn": "EXPRESSION syncedOn"
+  },
+  "upsertNoBranch": {
+    "AccountId": "accountid",
+    "Name": "name",
+    "PrimaryContact": null,
+    "Email": "emailaddress1 from Account only",
+    "Phone": "telephone1",
+    "ModifiedOn": "modifiedon",
+    "SyncedOn": "EXPRESSION syncedOn"
+  },
+  "verifySql": "SELECT TOP 20 Name, PrimaryContact, Email, SyncedOn FROM dbo.CrmAccounts ORDER BY SyncedOn DESC;"
+}

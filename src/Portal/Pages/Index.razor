@@ -1,0 +1,101 @@
+@page "/"
+@using PartnerAppPortal.Portal.Services
+@inject IAssessmentApiClient AssessmentApi
+
+<div class="landing">
+    <h1 class="landing-title">Partner Assessment Application</h1>
+    <p class="landing-subtitle">Welcome, to begin please log in below.</p>
+
+    <div class="landing-login">
+        <label class="landing-label" for="loginEmail">Email address</label>
+        <input id="loginEmail"
+               @bind="Email"
+               @bind:event="oninput"
+               type="email"
+               class="form-control landing-input"
+               placeholder="name@company.com"
+               autocomplete="email"
+               inputmode="email"
+               disabled="@_busy" />
+
+        <button type="button" class="btn btn-primary landing-btn" @onclick="HandleLogin" disabled="@_busy">
+            @(_busy ? "Checking..." : "Get Started")
+        </button>
+
+        @if (!string.IsNullOrEmpty(Message))
+        {
+            <p class="landing-error">@Message</p>
+        }
+    </div>
+</div>
+
+@code {
+    [Inject] NavigationManager Nav { get; set; } = default!;
+
+    private string Email { get; set; } = string.Empty;
+    private string? Message { get; set; }
+    private bool _busy;
+
+    private async Task HandleLogin()
+    {
+        Message = null;
+
+        if (string.IsNullOrWhiteSpace(Email))
+        {
+            Message = "Enter your email to continue.";
+            return;
+        }
+
+        var email = Email.Trim();
+        if (!IsValidEmail(email))
+        {
+            Message = "Enter a valid email address (example: name@company.com).";
+            return;
+        }
+
+        // Employee domain → employee portal
+        if (email.EndsWith("@partnerdevelopmentgroup.com", StringComparison.OrdinalIgnoreCase) ||
+            email.EndsWith("@pdg.com", StringComparison.OrdinalIgnoreCase))
+        {
+            Nav.NavigateTo("/dashboard/employee");
+            return;
+        }
+
+        // Partner domain must match a CrmAccounts.Email domain
+        _busy = true;
+        try
+        {
+            var customer = await AssessmentApi.FindCustomerByEmailAsync(email);
+            if (customer is null || customer.Id == Guid.Empty)
+            {
+                Message = "No partner account found for that email. " +
+                          "Your CRM sync must store the contact email in CrmAccounts.Email " +
+                          "or CrmContacts.Email for this domain.";
+                return;
+            }
+
+            Nav.NavigateTo($"/dashboard/partner?customerId={customer.Id}");
+        }
+        catch (Exception ex)
+        {
+            Message = $"Could not verify partner login: {ex.Message}";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return string.Equals(addr.Address, email, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+}

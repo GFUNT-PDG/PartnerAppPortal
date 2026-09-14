@@ -1,0 +1,90 @@
+@inherits PartnerAppPortal.Portal.Pages.Wizard.WizardStepBase
+@using PartnerAppPortal.Core.Models.Crm
+@inject IAssessmentApiClient AssessmentApi
+
+<div class="wizard-step-panel">
+    <h3 class="wizard-step-title">@Title</h3>
+    <p class="wizard-step-subtitle">Confirm the CRM account selected for this assessment.</p>
+
+    @if (!string.IsNullOrEmpty(Error))
+    {
+        <p class="text-warning">@Error</p>
+    }
+
+    @if (Customer == null)
+    {
+        <p class="text-muted">Loading customer information...</p>
+    }
+    else
+    {
+        <div class="wizard-review-section">
+            <h4>@(string.IsNullOrWhiteSpace(Customer.Name) ? Customer.Id.ToString() : Customer.Name)</h4>
+            <p><strong>Account Id:</strong> @Customer.Id</p>
+            <p><strong>Primary Contact:</strong> @(Customer.PrimaryContact ?? "—")</p>
+            <p><strong>Account Executive:</strong> @(Customer.AccountExecutive ?? "—")</p>
+            <p><strong>Email:</strong> @(Customer.Email ?? "—")</p>
+            <p><strong>Phone:</strong> @(Customer.Phone ?? "—")</p>
+        </div>
+
+        <div class="wizard-actions">
+            <button type="button" class="btn btn-primary" @onclick="Next">Next</button>
+        </div>
+    }
+</div>
+
+@code {
+    public Customer? Customer { get; set; }
+    private string? Error { get; set; }
+
+    protected override string Section => "CRM_Account";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Title = "CRM Account Information";
+
+        var customerKey = State.CustomerId;
+
+        try
+        {
+            try
+            {
+                var assessment = await AssessmentApi.GetAssessmentByIdAsync(State.AssessmentId);
+                if (!string.IsNullOrWhiteSpace(assessment.CustomerId))
+                {
+                    customerKey = assessment.CustomerId;
+                    State.CustomerId = assessment.CustomerId;
+                }
+            }
+            catch (Exception ex)
+            {
+                Error = $"Assessment lookup warning: {ex.Message}";
+            }
+
+            if (string.IsNullOrWhiteSpace(customerKey))
+            {
+                Customer = new Customer { Name = "(unknown customer)" };
+                return;
+            }
+
+            Customer = await AssessmentApi.GetCustomerByNameAsync(customerKey);
+
+            if (Guid.TryParse(customerKey, out var id))
+                Customer.Id = id;
+
+            if (string.IsNullOrWhiteSpace(Customer.Name))
+                Customer.Name = customerKey;
+        }
+        catch (Exception ex)
+        {
+            Error = $"Could not load CRM account details: {ex.Message}";
+            Customer = new Customer
+            {
+                Name = string.IsNullOrWhiteSpace(customerKey) ? "(unknown customer)" : customerKey
+            };
+            if (Guid.TryParse(customerKey, out var id))
+                Customer.Id = id;
+        }
+    }
+
+    private async Task Next() => await OnNext.InvokeAsync();
+}

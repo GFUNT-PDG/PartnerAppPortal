@@ -1,0 +1,36 @@
+﻿### SHEET: Co-sell & Referrals usedRows=36 usedCols=5 preview=36x5
+Questions | Response | Result | Score | scoring logic:
+Referral Process Overview |  |  |  | 
+Is Partner currently submitting Co-Sell Referrals to Microsoft? | Yes | 5 | 5 | 
+What type of referrals is Partner submitting? | IP Co-Sell |  | Not Applicable | 
+Does Partner have an automated method of submitted referrals? | Yes | 5 | 5 | 
+If yes, what solution are they using? |  |  | Not Applicable | 
+Is partner resubmitting expired referrals? | No | 0 | 0 | 
+Team Structure |  |  |  | 
+Does Partner have a responsible person for submitting referrals? | Yes | 5 | 5 | 
+Is this process documented as a standard SOP? | Yes | 5 | 5 | 
+Inbound Leads |  |  |  | 
+Is Partner receiving inbound leads from Microsoft? | Yes | 5 | 5 | 
+If yes, How Many in the past 12 months? | 0 |  | Not Applicable | 
+Does Partner have a responsible person for accepting leads? | Yes | 5 | 5 | 
+Is this process documented as a standard SOP? | No | 0 | 0 | 
+Does Partner have an automated method for syncing leads to CRM? | No | 0 | 0 | 
+If yes, what solution are they using? | None |  | Not Applicable | 
+P2P Referrals |  |  |  | 
+Is Partner doing P2P business? | Yes | 5 | 5 | 
+If yes, is Partner sharing P2P deals in Partner center? | No | 0 | 0 | 
+If yes, are inbound deals being accepted in Partner Center? | No | 0 | 0 | 
+Does Partner have a responsible person for accepting P2P referrals? | No | 0 | 0 | 
+Is this process documented as a standard SOP? | No | 0 | 0 | 
+Customer Details |  |  |  | 
+How Many Referrals has partner submitted? | 3 |  | Not Applicable | 
+New Referrals in the past 3 months | 3 |  | Not Applicable | 
+New Referrals in the past 6 months | 3 |  | Not Applicable | 
+New Referrals in the past 12 months | 3 | 15% | 4 | 
+New Referrals in the past 24 months | 3 |  | Not Applicable | 
+How many Referrals has Microsoft accepted? | 0 |  | Not Applicable | 
+Is Partner tracking deals submitted versus not submitted? | No | 0 | 0 | 
+If yes, how are they being tracked? | None |  | Not Applicable | 
+Total Points Earned |  |  | 39 | 
+Partner Progress Score for Co-Sell Utilization |  |  | 39% | 
+Potential Score |  |  | 100% | 

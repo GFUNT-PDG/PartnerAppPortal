@@ -1,0 +1,134 @@
+================================================================================
+CrmSync — DAILY INCREMENTAL SYNC (watermark that actually persists)
+================================================================================
+
+WHY YOUR OLD FLOW WAS NOT INCREMENTAL
+------------------------------------
+You had:
+  1) Initialize variable LastSyncTime = 1900-01-01   ← runs EVERY time
+  2) Filter: modifiedon gt LastSyncTime
+  3) At the end: Set variable = utcNow()
+
+Step 3 does nothing for the next run, because Step 1 resets to 1900 again.
+Result: every run re-pulls almost everything.
+
+FIX: store LastSyncTime in SQL (dbo.CrmSyncWatermark), read it at start,
+write it at end. That survives between runs.
+
+
+PART A — RUN THIS SQL ONCE (Azure Query editor / SSMS)
+------------------------------------------------------
+File: C:\PartnerAppPortal\src\sql\CreateCrmSyncWatermark.sql
+
+Creates:
+  - dbo.CrmSyncWatermark table
+  - dbo.GetCrmSyncWatermark
+  - dbo.SetCrmSyncWatermark
+
+
+PART B — FLOW STRUCTURE (daily incremental)
+-------------------------------------------
+Recurrence
+  Frequency: Day
+  Interval: 1
+  Time: pick a quiet hour (example 2:00 AM)
+  Time zone: your local zone
+
+└── Execute stored procedure: GetCrmSyncWatermark
+      WatermarkKey = CrmAccounts
+      (save the LastSyncUtc output)
+
+└── List rows (Accounts)
+      Filter rows:
+        modifiedon gt @{body('GetCrmSyncWatermark')?['resultsets']?['Table1']?[0]?['LastSyncUtc']}
+
+      *** If that path looks different in your run output, open a test run,
+          expand GetCrmSyncWatermark → outputs → copy the exact path to LastSyncUtc.
+          Common alternates:
+            @{first(body('GetCrmSyncWatermark')?['resultsets']?['Table1'])?['LastSyncUtc']}
+            @{outputs('GetCrmSyncWatermark')?['body/resultsets/Table1/0/LastSyncUtc']}
+
+└── Apply to each (value)
+      └── Condition: primary contact present?
+          ├── YES: Get Contact → UpsertCrmAccount (contact email/name)
+          └── NO:  UpsertCrmAccount (account email only)
+
+└── Execute stored procedure: SetCrmSyncWatermark
+      WatermarkKey = CrmAccounts
+      LastSyncUtc  = @{utcNow()}
+
+IMPORTANT: SetCrmSyncWatermark must be AFTER Apply to each (same level as
+List rows), NOT inside the loop. One watermark update per run.
+
+
+PART C — BUILD STEPS IN POWER AUTOMATE
+--------------------------------------
+1) Recurrence → Day / 1 / choose time
+
+2) Delete "Initialize variable LastSyncTime" if you still have it.
+   You do NOT need a flow variable anymore.
+
+3) Add: SQL Server → Execute stored procedure (V2)
+   Name: GetCrmSyncWatermark
+   Procedure: [dbo].[GetCrmSyncWatermark]
+   WatermarkKey: CrmAccounts
+
+4) List rows (Accounts)
+   Filter rows — click fx and paste (adjust path after first test if needed):
+
+     modifiedon gt @{first(body('GetCrmSyncWatermark')?['resultsets']?['Table1'])?['LastSyncUtc']}
+
+5) Keep your Apply to each + Condition + Upsert mapping from REBUILD-GUIDE.txt
+
+6) After the Apply to each (outside the loop), add:
+   SQL Server → Execute stored procedure (V2)
+   Name: SetCrmSyncWatermark
+   Procedure: [dbo].[SetCrmSyncWatermark]
+   WatermarkKey: CrmAccounts
+   LastSyncUtc: @{utcNow()}
+
+
+PART D — FIRST RUN / BACKFILL
+-----------------------------
+First time after creating the watermark table, LastSyncUtc is 1900-01-01,
+so the first run does a FULL sync (good).
+
+After that succeeds, watermark becomes "now", and later daily runs only
+get Accounts with modifiedon newer than that.
+
+To force another full sync later:
+  UPDATE dbo.CrmSyncWatermark
+  SET LastSyncUtc = '1900-01-01T00:00:00'
+  WHERE WatermarkKey = N'CrmAccounts';
+
+
+PART E — VERIFY
+---------------
+-- Watermark
+SELECT * FROM dbo.CrmSyncWatermark;
+
+-- Recent upserts
+SELECT TOP 20 Name, PrimaryContact, Email, SyncedOn
+FROM dbo.CrmAccounts
+ORDER BY SyncedOn DESC;
+
+-- Flow run history should show fewer List rows after the first full sync
+
+
+OPTIONAL SAFER WATERMARK (advanced)
+-----------------------------------
+Instead of utcNow() at the end, save the MAX(modifiedon) from the batch
+you just processed. That avoids missing records if the run started mid-second.
+For ~100 accounts, utcNow() after a successful loop is fine.
+
+
+QUICK CHECKLIST
+---------------
+[ ] Ran CreateCrmSyncWatermark.sql
+[ ] Recurrence = Daily
+[ ] GetCrmSyncWatermark at start
+[ ] List rows filter uses watermark LastSyncUtc
+[ ] Upsert uses Contact email when present
+[ ] SetCrmSyncWatermark AFTER the loop with utcNow()
+[ ] Removed Initialize variable = 1900
+================================================================================

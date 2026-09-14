@@ -1,0 +1,27 @@
+<div class="mb-3">
+    <label>Select Customer</label>
+
+    <select class="form-select" @bind="SelectedCustomerIdValue" @bind:after="OnSelectionChanged">
+        <option value="">-- Select a customer --</option>
+        @foreach (var customer in Customers)
+        {
+            <option value="@customer.Id.ToString()">@customer.Name</option>
+        }
+    </select>
+</div>
+
+@if (!string.IsNullOrEmpty(LoadError))
+{
+    <p class="text-danger">@LoadError</p>
+}
+
+@if (!string.IsNullOrEmpty(StatusMessage))
+{
+    <p class="text-danger">@StatusMessage</p>
+}
+
+<button type="button"
+        class="btn btn-primary mt-3"
+        @onclick="ConfirmCustomerSelection">
+    Confirm
+</button>

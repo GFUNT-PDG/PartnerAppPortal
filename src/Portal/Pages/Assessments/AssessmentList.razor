@@ -1,0 +1,37 @@
+@using PartnerAppPortal.Portal.Services
+@using PartnerAppPortal.Core.Models.Assessments
+@using PartnerAppPortal.Portal.Pages.Wizard
+
+@page "/assessments"
+@inject IAssessmentApiClient Api
+
+<h3>Assessment Questions</h3>
+
+@if (questions is null)
+{
+    <p>Loading...</p>
+}
+else if (!questions.Any())
+{
+    <p>No questions found.</p>
+}
+else
+{
+    <ul>
+        @foreach (var q in questions)
+        {
+            <li>
+                <strong>@q.Section</strong>: @q.QuestionText
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private IReadOnlyList<AssessmentQuestion>? questions;
+
+    protected override async Task OnInitializedAsync()
+    {
+        questions = await Api.GetQuestionsAsync();
+    }
+}

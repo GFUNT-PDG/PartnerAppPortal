@@ -1,0 +1,89 @@
+@inherits PartnerAppPortal.Portal.Pages.Wizard.WizardStepBase
+@using PartnerAppPortal.Core.Models.Assessments
+@inject IAssessmentApiClient AssessmentApi
+
+<h3>@Title</h3>
+
+@if (!string.IsNullOrEmpty(Error))
+{
+    <p class="text-danger">@Error</p>
+}
+
+@if (Marketplace == null)
+{
+    <p>Loading marketplace usage...</p>
+}
+else
+{
+    <div class="mb-3">
+        <label>Marketplace Offers</label>
+        <input type="number"
+               class="form-control"
+               @bind="Marketplace.Offers" />
+    </div>
+
+    <div class="mb-3">
+        <label>Marketplace Transactions</label>
+        <input type="number"
+               class="form-control"
+               @bind="Marketplace.Transactions" />
+    </div>
+
+    <div class="mb-3">
+        <label>Marketplace Revenue ($)</label>
+        <input type="number"
+               class="form-control"
+               @bind="Marketplace.Revenue" />
+    </div>
+
+    <div class="mb-3">
+        <label>Marketplace Growth (%)</label>
+        <input type="number"
+               class="form-control"
+               @bind="Marketplace.Growth" />
+    </div>
+
+    <button class="btn btn-secondary" @onclick="Back">Back</button>
+    <button class="btn btn-primary" @onclick="Next">Next</button>
+}
+
+@code {
+    public MarketPlaceUsage? Marketplace { get; set; }
+    private string? Error { get; set; }
+
+    protected override string Section => "Marketplace_Usage";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Title = "Marketplace Usage";
+
+        try
+        {
+            Marketplace = await AssessmentApi.GetMarketplaceUsageAsync(State.AssessmentId)
+                          ?? new MarketPlaceUsage();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Could not load marketplace usage: {ex.Message}";
+            Marketplace = new MarketPlaceUsage();
+        }
+    }
+
+    private async Task Next()
+    {
+        try
+        {
+            await AssessmentApi.SaveMarketplaceUsageAsync(State.AssessmentId, Marketplace!);
+            await OnNext.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Save failed: {ex.Message}";
+        }
+    }
+
+    private async Task Back()
+    {
+        await OnBack.InvokeAsync();
+    }
+}

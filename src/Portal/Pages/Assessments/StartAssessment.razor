@@ -1,0 +1,55 @@
+@page "/assessment/start/{customerId}"
+@using PartnerAppPortal.Portal.Services
+@using PartnerAppPortal.Core.Models.Assessments
+@inject NavigationManager Nav
+@inject IAssessmentApiClient AssessmentApi
+@inject WizardState State
+
+<h3>Starting Assessment</h3>
+
+@if (!string.IsNullOrEmpty(Error))
+{
+    <p class="text-danger">@Error</p>
+}
+else
+{
+    <p>Creating a new assessment for customer @CustomerId…</p>
+}
+
+@code {
+    [Parameter]
+    public string? CustomerId { get; set; }
+
+    private string? Error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(CustomerId) || !Guid.TryParse(CustomerId, out _))
+        {
+            Error = "Invalid customer id.";
+            return;
+        }
+
+        try
+        {
+            var assessmentId = Guid.NewGuid();
+
+            // Stash for wizard Step1 even if GET assessment fails later
+            State.CustomerId = CustomerId;
+            State.AssessmentId = assessmentId;
+
+            await AssessmentApi.CreateAssessmentAsync(new AssessmentRequest
+            {
+                Id = assessmentId,
+                CustomerId = CustomerId,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            Nav.NavigateTo($"/assessment/wizard/{assessmentId}");
+        }
+        catch (Exception ex)
+        {
+            Error = $"Could not create assessment: {ex.Message}";
+        }
+    }
+}

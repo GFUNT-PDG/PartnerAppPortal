@@ -1,0 +1,11 @@
+@page "/login"
+
+@code {
+    [Inject] NavigationManager Nav { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        // Home and login are combined on "/"
+        Nav.NavigateTo("/", replace: true);
+    }
+}

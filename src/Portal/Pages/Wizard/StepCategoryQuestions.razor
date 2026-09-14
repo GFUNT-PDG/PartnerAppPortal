@@ -1,0 +1,286 @@
+@inherits PartnerAppPortal.Portal.Pages.Wizard.WizardStepBase
+@using System.Linq
+@using System.Text.Json
+@using PartnerAppPortal.Core.Models.Assessments
+@using PartnerAppPortal.Core.Services.Assessments
+@inject IAssessmentApiClient AssessmentApi
+
+<div class="wizard-step-panel">
+    <h3 class="wizard-step-title">@StepTitle</h3>
+
+    @if (!string.IsNullOrEmpty(LoadError))
+    {
+        <p class="text-warning">@LoadError</p>
+    }
+
+    @if (Questions == null)
+    {
+        <p class="text-muted">Loading questions...</p>
+    }
+    else if (!Questions.Any())
+    {
+        <p class="text-muted">No questions are configured for this category yet. You can continue.</p>
+        <div class="wizard-actions">
+            <button type="button" class="btn btn-secondary" @onclick="Back">Back</button>
+            <button type="button" class="btn btn-primary" @onclick="Next">Next</button>
+        </div>
+    }
+    else
+    {
+        <p class="wizard-step-subtitle">@Questions.Count questions in this section</p>
+
+        var groups = Questions
+            .GroupBy(q => string.IsNullOrWhiteSpace(q.Subsection) ? "General" : q.Subsection!)
+            .ToList();
+        var groupIndex = 0;
+
+        @foreach (var group in groups)
+        {
+            var tone = groupIndex % 2 == 0 ? "tone-a" : "tone-b";
+            groupIndex++;
+
+            <section class="wizard-group @tone">
+                @if (groups.Count > 1 || group.Key != "General")
+                {
+                    <div class="wizard-subsection">@group.Key</div>
+                }
+
+                @foreach (var q in group)
+                {
+                    var type = (q.AnswerType ?? "Text").Trim();
+                    var options = ParseOptions(q);
+                    var isYes = IsYes(q);
+                    var locked = IsQuestionLocked(q);
+                    var lockHint = locked ? LockedHint(q) : null;
+
+                    <div class="wq-row @(locked ? "wq-locked" : "")">
+                        <div class="wq-label">
+                            @q.QuestionText
+                            @if (!string.IsNullOrEmpty(lockHint))
+                            {
+                                <div class="wq-lock-hint">@lockHint</div>
+                            }
+                        </div>
+                        <div class="wq-control">
+                            @if (string.Equals(type, "YesNo", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <div class="yn-switch @(locked ? "disabled" : "")"
+                                     @onclick="() => ToggleYesNo(q)"
+                                     @onclick:stopPropagation="true">
+                                    <span class="yn-text @(isYes ? "" : "on")">No</span>
+                                    <span class="yn-track @(isYes ? "yes" : "no")" aria-hidden="true">
+                                        <span class="yn-knob"></span>
+                                    </span>
+                                    <span class="yn-text @(isYes ? "on" : "")">Yes</span>
+                                </div>
+                            }
+                            else if (string.Equals(type, "Choice", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <select class="form-control wq-input" @bind="q.Response" disabled="@locked">
+                                    @if (!options.Any())
+                                    {
+                                        <option value="">Select...</option>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var opt in options)
+                                        {
+                                            <option value="@opt">@opt</option>
+                                        }
+                                    }
+                                </select>
+                            }
+                            else if (string.Equals(type, "Number", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <input type="number"
+                                       class="form-control wq-input"
+                                       @key="@($"{q.QuestionId}-{(locked ? "lock" : "open")}")"
+                                       value="@q.Response"
+                                       disabled="@locked"
+                                       @onchange="e => OnScoreChanged(q, e)" />
+                            }
+                            else
+                            {
+                                <input class="form-control wq-input"
+                                       @key="@($"{q.QuestionId}-{(locked ? "lock" : "open")}")"
+                                       @bind="q.Response"
+                                       disabled="@locked" />
+                            }
+                        </div>
+                    </div>
+                }
+            </section>
+        }
+
+        <div class="wizard-actions">
+            <button type="button" class="btn btn-secondary" @onclick="Back">Back</button>
+            <button type="button" class="btn btn-primary" @onclick="Next">Next</button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Category { get; set; } = "";
+    [Parameter] public string StepTitle { get; set; } = "Questions";
+
+    public List<AssessmentQuestion>? Questions { get; set; }
+    private string? LoadError { get; set; }
+    private string? _loadedCategory;
+
+    protected override string Section => Category;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Title = StepTitle;
+
+        // Reload whenever category changes (DynamicComponent may reuse instance without @key)
+        if (string.Equals(_loadedCategory, Category, StringComparison.Ordinal) && Questions != null)
+            return;
+
+        await LoadQuestionsAsync();
+    }
+
+    private async Task LoadQuestionsAsync()
+    {
+        LoadError = null;
+        Questions = null;
+        _loadedCategory = Category;
+
+        try
+        {
+            Questions = (await AssessmentApi.GetQuestionsByCategoryAsync(Category)).ToList();
+
+            var existing = await AssessmentApi.GetAnswersByAssessmentAsync(State.AssessmentId);
+            foreach (var q in Questions)
+            {
+                var match = existing.FirstOrDefault(x =>
+                    string.Equals(x.QuestionId, q.QuestionId, StringComparison.OrdinalIgnoreCase));
+                if (match != null && !string.IsNullOrWhiteSpace(match.Response))
+                    q.Response = match.Response;
+            }
+
+            foreach (var q in Questions.Where(x =>
+                         string.Equals(x.AnswerType, "YesNo", StringComparison.OrdinalIgnoreCase) &&
+                         !IsYes(x) &&
+                         !string.Equals(x.Response, "No", StringComparison.OrdinalIgnoreCase)))
+            {
+                q.Response = "No";
+            }
+
+            ApplyGatesToQuestions();
+        }
+        catch (Exception ex)
+        {
+            LoadError = $"Could not load questions: {ex.Message}";
+            Questions = new();
+        }
+    }
+
+    private Dictionary<string, string?> ResponseMap()
+    {
+        var map = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        if (Questions == null) return map;
+        foreach (var q in Questions)
+            map[q.QuestionId] = q.Response;
+        return map;
+    }
+
+    private void ApplyGatesToQuestions()
+    {
+        if (Questions == null) return;
+        var map = ResponseMap();
+        QuestionAnswerGate.NormalizeAll(map);
+        foreach (var q in Questions)
+        {
+            if (map.TryGetValue(q.QuestionId, out var v))
+                q.Response = v;
+        }
+    }
+
+    private bool IsQuestionLocked(AssessmentQuestion q) =>
+        QuestionAnswerGate.IsLocked(q.QuestionId, ResponseMap());
+
+    private string? LockedHint(AssessmentQuestion q)
+    {
+        foreach (var f in QuestionAnswerGate.DesignationFamilies)
+        {
+            if (string.Equals(q.QuestionId, f.ScoreId, StringComparison.OrdinalIgnoreCase))
+                return "Score is disabled only when both “have designation” and “going to target” are No.";
+            if (string.Equals(q.QuestionId, f.TargetId, StringComparison.OrdinalIgnoreCase))
+                return "Locked because the partner already has this designation.";
+        }
+        return "Locked by a related answer.";
+    }
+
+    private static bool IsYes(AssessmentQuestion q) =>
+        string.Equals(q.Response, "Yes", StringComparison.OrdinalIgnoreCase);
+
+    private void ToggleYesNo(AssessmentQuestion q)
+    {
+        if (IsQuestionLocked(q))
+            return;
+
+        var next = IsYes(q) ? "No" : "Yes";
+        var map = ResponseMap();
+        if (QuestionAnswerGate.IsResponseForbidden(q.QuestionId, next, map))
+            return;
+
+        q.Response = next;
+        map[q.QuestionId] = next;
+        QuestionAnswerGate.ApplySideEffects(q.QuestionId, map);
+        foreach (var other in Questions ?? Enumerable.Empty<AssessmentQuestion>())
+        {
+            if (map.TryGetValue(other.QuestionId, out var v))
+                other.Response = v;
+        }
+
+        // Force full re-render so score inputs unlock when Target flips to Yes
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnScoreChanged(AssessmentQuestion q, ChangeEventArgs e)
+    {
+        if (IsQuestionLocked(q))
+            return;
+
+        q.Response = e.Value?.ToString();
+    }
+
+    private static List<string> ParseOptions(AssessmentQuestion q)
+    {
+        if (string.IsNullOrWhiteSpace(q.OptionsJson))
+            return new List<string>();
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(q.OptionsJson) ?? new List<string>();
+        }
+        catch
+        {
+            return q.OptionsJson
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
+        }
+    }
+
+    private async Task Next()
+    {
+        try
+        {
+            if (Questions?.Any() == true)
+            {
+                ApplyGatesToQuestions();
+                await AssessmentApi.SaveScoresAsync(State.AssessmentId, Questions);
+            }
+        }
+        catch (Exception ex)
+        {
+            LoadError = $"Could not save answers: {ex.Message}";
+            return;
+        }
+
+        await OnNext.InvokeAsync();
+    }
+
+    private async Task Back() => await OnBack.InvokeAsync();
+}

@@ -1,0 +1,144 @@
+@using PartnerAppPortal.Portal.Services
+@using PartnerAppPortal.Core.Models.Assessments
+@using PartnerAppPortal.Portal.Pages.Wizard
+@using Microsoft.JSInterop
+@inject NavigationManager Nav
+@inject IAssessmentApiClient Api
+@inject WizardState State
+@inject IJSRuntime JS
+
+@page "/assessment/wizard/{assessmentId:guid}"
+
+<div class="wizard-shell">
+    <div class="eyebrow">Partner Assessment</div>
+    <h3>Partner Assessment Wizard</h3>
+    <div class="wizard-progress-meta">Step @currentStep of 9 — @CurrentStepLabel</div>
+
+    <WizardNavigation CurrentStep="@currentStep" TotalSteps="9" OnStepChanged="NavigateToStep" />
+
+    @* @key forces a fresh component when the step changes (same Type for steps 3–7) *@
+    <DynamicComponent @key="currentStep" Type="@currentComponent" Parameters="@currentParams" />
+</div>
+
+@code {
+    [Parameter]
+    public Guid AssessmentId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "step")]
+    public int? StepFromQuery { get; set; }
+
+    private int currentStep = 1;
+    private Type? currentComponent;
+    private Dictionary<string, object>? currentParams;
+    private bool _initialized;
+
+    private static readonly (string Category, string Title)[] CategorySteps =
+    {
+        ("Solutions_Specializations", "Solutions and Specializations"),
+        ("CSP", "Customers & CSP"),
+        ("CoSell", "Co-Sell & Referrals"),
+        ("MarketPlace", "Marketplace Offers"),
+        ("Incentives", "Incentives Usage"),
+    };
+
+    private static readonly string[] StepNames =
+    {
+        "CRM Account",
+        "Partner Information",
+        "Solutions and Specializations",
+        "Customers & CSP",
+        "Co-Sell & Referrals",
+        "Marketplace Offers",
+        "Incentives Usage",
+        "Review & Submit",
+        "Complete"
+    };
+
+    private string CurrentStepLabel =>
+        currentStep >= 1 && currentStep <= StepNames.Length
+            ? StepNames[currentStep - 1]
+            : "Assessment";
+
+    protected override void OnInitialized()
+    {
+        State.AssessmentId = AssessmentId;
+        currentStep = StepFromQuery is >= 1 and <= 9 ? StepFromQuery.Value : 1;
+        LoadStep();
+        _initialized = true;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (AssessmentId != Guid.Empty)
+            State.AssessmentId = AssessmentId;
+
+        // Only honor query changes from browser back/forward after init —
+        // do not let a stale NavigateTo race reset the step.
+        if (_initialized && StepFromQuery is >= 1 and <= 9 && StepFromQuery.Value != currentStep)
+        {
+            // Ignore stale query if it would jump backward immediately after Next
+            // (handled by syncing URL via history.replaceState instead of NavigateTo).
+        }
+    }
+
+    private async Task NavigateToStep(int step)
+    {
+        if (step < 1) step = 1;
+        if (step > 9) step = 9;
+        if (step == currentStep && currentComponent != null)
+            return;
+
+        currentStep = step;
+        LoadStep();
+
+        // Update the URL without Blazor remounting this page (NavigateTo was
+        // resetting back to step 3 with the same Solutions questions).
+        try
+        {
+            var path = $"/assessment/wizard/{AssessmentId}?step={currentStep}";
+            await JS.InvokeVoidAsync("history.replaceState", null, "", path);
+        }
+        catch
+        {
+            // JS unavailable — in-memory step still works
+        }
+    }
+
+    private void LoadStep()
+    {
+        if (currentStep is >= 3 and <= 7)
+        {
+            var cat = CategorySteps[currentStep - 3];
+            currentComponent = typeof(StepCategoryQuestions);
+            currentParams = new Dictionary<string, object>
+            {
+                ["AssessmentId"] = AssessmentId,
+                ["Category"] = cat.Category,
+                ["StepTitle"] = cat.Title,
+                ["OnNext"] = EventCallback.Factory.Create(this, () => NavigateToStep(currentStep + 1)),
+                ["OnBack"] = EventCallback.Factory.Create(this, () => NavigateToStep(currentStep - 1))
+            };
+            return;
+        }
+
+        currentComponent = currentStep switch
+        {
+            1 => typeof(Step1_CrmAccount),
+            2 => typeof(Step2_PartnerInfo),
+            8 => typeof(Step9_ReviewSubmit),
+            9 => typeof(WizardComplete),
+            _ => typeof(Step1_CrmAccount)
+        };
+
+        currentParams = currentStep switch
+        {
+            9 => new Dictionary<string, object>(),
+            _ => new Dictionary<string, object>
+            {
+                ["AssessmentId"] = AssessmentId,
+                ["OnNext"] = EventCallback.Factory.Create(this, () => NavigateToStep(currentStep + 1)),
+                ["OnBack"] = EventCallback.Factory.Create(this, () => NavigateToStep(currentStep - 1))
+            }
+        };
+    }
+}

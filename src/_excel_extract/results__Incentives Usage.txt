@@ -1,0 +1,12 @@
+﻿### SHEET: Incentives Usage usedRows=36 usedCols=4 preview=36x4
+50% | Response | Result | Score
+Referral Process Overview |  |  | 
+Has Partner activated any Benefits | Yes | 10 | 10
+Has Partner enrolled in MCI Programs | Yes | 10 | 10
+Is Partner using MCI Programs | Yes | 5 | 5
+Is Partner using Coop Funds | Yes | 5 | 5
+Is Partner a registered supplier? | Yes | 20 | 20
+Team Structure |  |  | 
+Total Points Earned |  |  | 50
+Partner Progress Score for CSP |  |  | 50%
+Potential Score |  |  | 100%

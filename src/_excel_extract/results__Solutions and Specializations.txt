@@ -1,0 +1,61 @@
+﻿### SHEET: Solutions and Specializations usedRows=61 usedCols=6 preview=61x6
+Questions | Response | Result | Score |  | 
+Partner Membership Enrollment |  |  |  |  | 
+Is Partner enrolled in any Solutions Designations? | Yes | 4 | 4 |  | 
+Is Partner enrolled in any Advanced Specializations? | No | 0 | 0 |  | 
+Solutions Designations |  |  |  |  | 
+Does Partner have the Business Applications Designation? | No | 0 | 0 |  | 
+What is the current Designation Score? | 50 | 50% | 3 |  | 
+Is Partner going to target the Business Applications Designation? | No | 10 | 10 |  | 
+Does Partner have the Data & AI Designation? | No | 0 | 0 |  | 
+What is the current Designation Score? | 0 | 0% | 0 |  | 
+Is Partner going to target the Data & AI Designation? | Yes | 0 | 0 |  | 
+Does Partner have the Digital & App Innovation Designation? | No | 0 | 0 |  | 
+What is the current Designation Score? | 0 | 0% | 0 |  | 
+Is Partner going to target the Digital & App innovation Designation? | Yes | 0 | 0 |  | 
+Does Partner have the Infrastructure Designation? | No | 0 | 0 |  | 
+What is the current Designation Score? | 0 | 0% | 0 |  | 
+Is Partner going to target the Infrastructure Designation? | Yes | 0 | 0 |  | 
+Does Partner have the Modern Work Designation? | Yes | 5 | 5 |  | 
+What is the current Designation Score? | 0 | 0% | 0 |  | 
+Is Partner going to target the Modern Work Designation? | Yes | 0 | 0 |  | 
+Does Partner have the Security Designation? | No | 0 | 0 |  | 
+What is the current Designation Score? | 0 | 0% | 0 |  | 
+Is Partner going to target the Security Designation? | Yes | 0 | 0 |  | 
+Advanced Specializations |  |  |  |  | 
+Does Partner have the AI Platform on Microsoft Azure Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Analytics on Microsoft Azure Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Agentic DevOps with Microsoft Azure and GitHub Advanced Sp... | No | 0 | 0 |  | 
+Does Partner have the Hybrid Cloud Infrastructure with Microsoft Azure Stack HCI... | No | 0 | 0 |  | 
+Does Partner have the Networking Services in Microsoft Azure Advanced Specializa... | No | 0 | 0 |  | 
+Does Partner have the Microsoft Azure VMware Solution Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the AI Apps on Microsoft Azure Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Data Warehouse Migration to Microsoft Azure Advanced Speci... | No | 0 | 0 |  | 
+Does Partner have the Infra and Database Migration to Microsoft Azure Advanced S... | No | 0 | 0 |  | 
+Does Partner have the Kubernetes on Microsoft Azure Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Migrate Enterprise Apps to Microsoft Azure Advanced Specia... | No | 0 | 0 |  | 
+Does Partner have the SAP on Microsoft Azure Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Microsoft Azure Virtual Desktop Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Finance Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Microsoft Low Code Application Development Advanced Specia... | No | 0 | 0 |  | 
+Does Partner have the Intelligent Automation Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Business Intelligence Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Sales Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Service Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Small and Midsize Business Management Advanced Specializat... | No | 0 | 0 |  | 
+Does Partner have the Supply Chain Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Adoption and Change Management Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Calling for Microsoft Teams Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Copilot Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Custom Teams Solutions Advanced Specialization Advanced Sp... | No | 0 | 0 |  | 
+Does Partner have the Meetings and Meeting Rooms for Microsoft Teams Advanced Sp... | No | 0 | 0 |  | 
+Does Partner have the Modernize End Points Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Teamwork Deployment Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Cloud Security Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Identity and Access Management Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Data Security Advanced Specialization? | No | 0 | 0 |  | 
+Does Partner have the Threat Protection Advanced Specialization? | No | 0 | 0 |  | 
+Customer Details |  |  |  |  | 
+Total Points Earned |  |  | 22 |  | 
+Partner Progress Score |  |  | 22% |  | 
+Potential Score |  |  | 100% |  | 

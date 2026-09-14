@@ -1,0 +1,39 @@
+﻿### SHEET: Customer & CSP Workbook usedRows=45 usedCols=4 preview=45x4
+Required Partner Center Permissions | Helpdesk Agent |  | 
+A basic Entra ID account will allow the user to see the Benefits, Customer, Insi... |  |  | 
+Questions | Response | Result | Score
+Program Setup Details |  |  | 
+Is this partner a Direct or Indirect CSP? | Direct CSP | 10 | 10
+If Indirect, who is their Distributor? | Pax8 |  | Not Applicable
+Does Partner have a specific segment? | SME&C |  | Not Applicable
+How long has the Partner been a CSP? |  |  | Not Applicable
+What is Partner's total 12 month CSP revenue? |  |  | Not Applicable
+Category Totals |  |  | 10
+Team Structure |  |  | 
+Does Partner have a dedicated licensing specialist or team? | Yes | 5 | 5
+Customer Available Options |  |  | 
+Self-Service Portal for licensing changes? | Yes | 5 | 5
+Automated Invoicing? | Yes | 5 | 5
+What platform does Partner use for Invoicing? | Yes | 5 | 5
+Online Payment option? | Yes | 5 | 5
+Automatic Payments? | Yes | 5 | 5
+Does Partner offer internal support? | Yes | 5 | 5
+Is support capability integrated with the self-service portal? | Yes | 5 | 5
+Customer Support Details |  |  | 
+Does Parter have a Microsoft Support Agreement? | Premier Support | 10 | 10
+Does Partner offer any custom services on top of licensing? | Yes | 5 | 5
+Sales & Growth Details |  |  | 
+How many customers does Partner have under CSP? | 40 |  | Not Applicable
+Net new customers in the past 3 months | 1 |  | Not Applicable
+Net new customers in the past 6 months | -4 |  | Not Applicable
+Net new customers in the past 12 months | 29 | 100% | 20
+Net new customers in the past 24 months | 40 |  | Not Applicable
+What is the average Commitment length? | 3-year Commit | 15 | 15
+What is the average CSP Customer tenure? | 3 or More Years | 5 | 5
+Total Points Earned |  |  | 105
+Partner Progress Score for CSP |  |  | 105%
+Sales Growth Percentage | Past 3 Month Growth | -500% | 
+ | Past 6 Month Growth | -825% | 
+ | Past 12 Month Growth | 38% | 
+ | Past 24 Month Growth | 38% | 
+Potential Score |  |  | 100%

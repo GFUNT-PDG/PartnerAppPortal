@@ -1,0 +1,119 @@
+﻿Id	QuestionId	Category	QuestionText	Section	Subsection	AnswerType	DisplayOrder	IsActive	Score	OptionsJson
+576edb4c-ca2a-4c5a-ae80-09da966ccf68	COSELL-009	CoSell	If yes, How Many in the past 12 months?	CoSell		text	0	True	0	
+66b85d36-c17d-4007-a73f-105651825ac7	COSELL-005	CoSell	Is partner resubmitting expired referrals?	CoSell		text	0	True	0	
+b17b27f9-e4ad-482b-8969-10b0c0ad56be	COSELL-018	CoSell	Is this process documented as a standard SOP?	CoSell		text	0	True	0	
+72401c18-856a-4881-bdf7-1b2a8c9cbe82	COSELL-021	CoSell	New Referrals in the past 6 months	CoSell		text	0	True	0	
+2097f649-3c87-4319-ab98-172eed878ae3	COSELL-023	CoSell	New Referrals in the past 24 months	CoSell		text	0	True	0	
+0d255314-bd82-423a-895e-2aa3c3ea756d	COSELL-010	CoSell	Does Partner have a responsible person for accepting leads?	CoSell		text	0	True	0	
+6cebb4fc-38f5-4c71-a2c8-38e3512af028	COSELL-002	CoSell	What type of referrals is Partner submitting?	CoSell		text	0	True	0	
+40bb6967-3906-4498-bd75-4a1c73104b2e	COSELL-006	CoSell	Does Partner have a responsible person for submitting referrals?	CoSell		text	0	True	0	
+60bcd2dc-7f1c-4c60-a595-4cad3336e9d8	COSELL-024	CoSell	How many Referrals has Microsoft accepted?	CoSell		text	0	True	0	
+741beed3-24e1-407d-9aff-56f1c97f9661	COSELL-017	CoSell	Does Partner have a responsible person for accepting P2P referrals?	CoSell		text	0	True	0	
+87535ed6-a14e-4a64-9861-57145d8686ca	COSELL-020	CoSell	New Referrals in the past 3 months	CoSell		text	0	True	0	
+c497952d-f8f4-4b04-a3c7-63cbd05209b0	COSELL-011	CoSell	Is this process documented as a standard SOP?	CoSell		text	0	True	0	
+14652387-3edd-4455-a931-64970adf1314	COSELL-026	CoSell	If yes, how are they being tracked?	CoSell		text	0	True	0	
+c783c09d-e31b-4b0c-b30a-7f7a867cc02d	COSELL-013	CoSell	If yes, what solution are they using?	CoSell		text	0	True	0	
+85da15f6-60b9-41f9-8bc7-80c4a0b52be3	COSELL-001	CoSell	Is Partner currently submitting Co-Sell Referrals to Microsoft?	CoSell		text	0	True	0	
+5dab93b0-24b2-4f62-905a-87b9d445ab8a	COSELL-004	CoSell	If yes, what solution are they using?	CoSell		text	0	True	0	
+f270ef22-2736-4b46-9718-8efef332af88	COSELL-014	CoSell	Is Partner doing P2P business?	CoSell		text	0	True	0	
+fd00f345-84ed-4af0-956e-92c36e73dc94	COSELL-012	CoSell	Does Partner have an automated method for syncing leads to CRM?	CoSell		text	0	True	0	
+04460879-2ade-446c-acbb-c438c47b9bb6	COSELL-019	CoSell	How Many Referrals has partner submitted?	CoSell		text	0	True	0	
+489f3489-d5f3-4f44-85dc-c60d377e1154	COSELL-022	CoSell	New Referrals in the past 12 months	CoSell		text	0	True	0	
+3d36777e-7eb5-41ae-9af7-d59b426ef937	COSELL-016	CoSell	If yes, are inbound deals being accepted in Partner Center?	CoSell		text	0	True	0	
+ec940bdc-9883-4551-adc0-d6a0cdb1bb7d	COSELL-025	CoSell	Is Partner tracking deals submitted versus not submitted?	CoSell		text	0	True	0	
+ffb75680-e7b9-44af-81c2-d8220dacb060	COSELL-003	CoSell	Does Partner have an automated method of submitted referrals?	CoSell		text	0	True	0	
+ca3f0089-a971-4dfd-b421-ddafa125d5b3	COSELL-008	CoSell	Is Partner receiving inbound leads from Microsoft?	CoSell		text	0	True	0	
+de0ce099-469a-4921-8389-ecd5416c86e4	COSELL-015	CoSell	If yes, is Partner sharing P2P deals in Partner center?	CoSell		text	0	True	0	
+d09fd6a4-a161-4852-b316-f41a7ca79d65	COSELL-007	CoSell	Is this process documented as a standard SOP?	CoSell		text	0	True	0	
+e5944738-5bb5-40f3-9359-fcd40472865e	CSP-PS-015	CSP	Does Partner offer any custom services on top of licensing?	Customers_CSP		text	0	True	0	
+7b459d3f-2c32-45f0-8d6a-e06fe19bc9ce	CSP-PS-002	CSP	If Indirect, who is their Distributor?	Customers_CSP		text	0	True	0	
+efddaa32-1c65-4cf3-9873-e7ff2e22b46a	CSP-PS-006	CSP	Does Partner have a dedicated licensing specialist or team?	Customers_CSP		text	0	True	0	
+65f241ea-f827-458a-84ef-cb8f708505c1	CSP-PS-011	CSP	Automatic Payments?	Customers_CSP		text	0	True	0	
+e42fecd5-f2cf-4d0f-90e8-cdd991c48fbf	CSP-PS-005	CSP	What is Partner's total 12 month CSP revenue?	Customers_CSP		text	0	True	0	
+dbfc28ec-3d7d-46ef-bb59-bf6bd3cf0464	CSP-PS-013	CSP	Is support capability integrated with the self-service portal?	Customers_CSP		text	0	True	0	
+2a25109e-7fb7-461a-8061-c2239b68bff2	CSP-SG-007	CSP	What is the average CSP Customer tenure?	Customers_CSP		text	0	True	0	
+64d54da0-42b2-4237-840e-80afcd6d5d07	CSP-PS-001	CSP	Is this partner a Direct or Indirect CSP?	Customers_CSP		text	0	True	0	
+a19561e9-16ed-453c-862c-56a8285d48a7	CSP-SG-006	CSP	What is the average Commitment length?	Customers_CSP		text	0	True	0	
+77a04da9-65b2-4c23-9dbf-5963db7e2764	CSP-PS-012	CSP	Does Partner offer internal support?	Customers_CSP		text	0	True	0	
+6e4f9913-4dd8-4330-9c54-5a14e4ffd8e2	CSP-PS-014	CSP	Does Parter have a Microsoft Support Agreement?	Customers_CSP		text	0	True	0	
+41f47c3b-cfdf-4368-ba21-4e9482bfa767	CSP-SG-002	CSP	Net new customers in the past 3 months	Customers_CSP		text	0	True	0	
+969bb141-c90e-4738-a245-434e9d5b1666	CSP-SG-004	CSP	Net new customers in the past 12 months	Customers_CSP		text	0	True	0	
+62932cad-6193-4ae0-8f51-346bf72f27c2	CSP-PS-004	CSP	How long has the Partner been a CSP?	Customers_CSP		text	0	True	0	
+a602d4e6-06b7-415f-b344-0ea3386b8f02	CSP-PS-008	CSP	Automated Invoicing?	Customers_CSP		text	0	True	0	
+a9095da3-3d11-4d2b-8dde-31b781eed734	CSP-SG-005	CSP	Net new customers in the past 24 months	Customers_CSP		text	0	True	0	
+74b8c53a-b5f3-42a3-9492-28832f41714a	CSP-SG-003	CSP	Net new customers in the past 6 months	Customers_CSP		text	0	True	0	
+fb959756-f8d1-4eda-9fef-2ea432a120c3	CSP-PS-007	CSP	Self-Service Portal for licensing changes?	Customers_CSP		text	0	True	0	
+6d3d6c0a-22a1-4da9-acb2-1e213843d8cd	CSP-PS-009	CSP	What platform does Partner use for Invoicing?	Customers_CSP		text	0	True	0	
+da9ab001-3ac0-4f91-aafc-08dac92d6d7c	CSP-PS-010	CSP	Online Payment option?	Customers_CSP		text	0	True	0	
+d4dc3e7f-9eb0-443c-aaf2-00e9039e0179	CSP-SG-001	CSP	How many customers does Partner have under CSP?	Customers_CSP		text	0	True	0	
+622379fc-be56-4cdc-835d-01458715d300	CSP-PS-003	CSP	Does Partner have a specific segment?	Customers_CSP		text	0	True	0	
+7bc20d64-aa51-4069-af3a-5cf3ff6ca48a	INC-OV-005	Incentives	Is Partner a registered supplier?	Incentives		text	0	True	0	
+2c7d8b23-8348-4cb7-afdc-6ac8a36d3902	INC-OV-001	Incentives	Has Partner activated any Benefits	Incentives		text	0	True	0	
+3529cc4d-481a-414e-b1da-6f6f724cb804	INC-OV-002	Incentives	Has Partner enrolled in MCI Programs	Incentives		text	0	True	0	
+b385834e-8dae-469a-a436-c228d571414d	INC-OV-003	Incentives	Is Partner using MCI Programs	Incentives		text	0	True	0	
+c6af2996-3b3c-4c7d-a805-a4abfcd03c5a	INC-OV-004	Incentives	Is Partner using Coop Funds	Incentives		text	0	True	0	
+03964bbb-a41a-49ac-bc60-bf5dd5c611e2	MP-MO-005	MarketPlace	Does partner have any Co-Sell ready offers?	Marketplace		text	0	True	0	
+10def15a-bb07-4c35-8982-ec5d0e1edebf	MP-SETUP-001	MarketPlace	Does Partner have a Publisher ID?	Marketplace		text	0	True	0	
+db14213a-a4eb-40a1-830b-6ed2e009a5fd	MP-MO-008	MarketPlace	Does Partner review their offers regularly for fit?	Marketplace		text	0	True	0	
+d1262dc0-8105-4826-b1c1-355debcf00b3	MP-MO-002	MarketPlace	How many offers have been created in the past 3 months?	Marketplace		text	0	True	0	
+edbafddc-ee2b-4323-9093-368cb04de598	MP-SETUP-002	MarketPlace	Is Partner working on publishing new offers in the marketplace?	Marketplace		text	0	True	0	
+e1b90640-94ea-4ef4-b466-3eef9aa8391b	MP-MO-007	MarketPlace	Is partner utilizing private or resell offers?	Marketplace		text	0	True	0	
+2941d95a-afe1-4294-a5db-423e603191ec	MP-MO-004	MarketPlace	How many offers have been created in the past 12 months	Marketplace		text	0	True	0	
+509c4fcf-3c39-479b-8fbd-000acbfee935	MP-MO-001	MarketPlace	How Many Marketplace Offers does Partner have?	Marketplace		text	0	True	0	
+50f9dbee-f22c-466a-891a-12e2eaa78170	MP-P2P-001	MarketPlace	Does partner have any co-branded offers?	Marketplace		text	0	True	0	
+28c4f836-7a4d-4da7-9d38-2ed5627f953c	MP-SETUP-003	MarketPlace	Does Partner have someone dedicated to building and updating offers?	Marketplace		text	0	True	0	
+677a65d0-9931-487a-bd8e-32fb34a3aab3	MP-MO-003	MarketPlace	How many offers have been created in the past 6 months?	Marketplace		text	0	True	0	
+7f059410-d432-430e-888b-3120bf5989d9	MP-MO-006	MarketPlace	Does partner hae any Transactable offers?	Marketplace		text	0	True	0	
+62f7e40b-a585-44d5-b9af-2b25a85c79de	SOL-DAI2-003	Solutions_Specializations	Is Partner going to target the Digital & App innovation Designation?	Solutions_Specializations		text	0	True	0	
+95999e21-815a-4f80-8de9-2e700e514ca8	SOL-AS-005	Solutions_Specializations	Does Partner have the Networking Services in Microsoft Azure Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+d235ce6f-7a2e-45d6-9e20-331686228598	SOL-AS-031	Solutions_Specializations	Does Partner have the Data Security Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+c16eab62-05ae-4969-80dd-3422f9e1cd6d	SOL-DAI-001	Solutions_Specializations	Does Partner have the Data & AI Designation?	Solutions_Specializations		text	0	True	0	
+302f0641-8b55-4c79-8f83-2f790d46ad6a	SOL-AS-020	Solutions_Specializations	Does Partner have the Small and Midsize Business Management Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+6a38c288-c590-45bb-87fb-30dd0bc9f153	SOL-SEC-002	Solutions_Specializations	What is the current Security Designation Score?	Solutions_Specializations		text	0	True	0	
+0cd9efba-7896-4073-9cee-2a303079d7a9	SOL-AS-019	Solutions_Specializations	Does Partner have the Service Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+5309716b-2205-4a88-bd42-1930b713afd5	SOL-INF-001	Solutions_Specializations	Does Partner have the Infrastructure Designation?	Solutions_Specializations		text	0	True	0	
+5414c1d7-4954-430e-ba79-153f2b06199f	SOL-AS-009	Solutions_Specializations	Does Partner have the Infra and Database Migration to Microsoft Azure Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+10404efb-d72a-4852-b727-15c96da6c628	SOL-AS-013	Solutions_Specializations	Does Partner have the Microsoft Azure Virtual Desktop Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+c573b7bd-0862-442d-a7b8-1684e6bc486c	SOL-DAI2-001	Solutions_Specializations	Does Partner have the Digital & App Innovation Designation?	Solutions_Specializations		text	0	True	0	
+44996a40-c1c2-4745-a7f5-1e5fb88fdad9	SOL-AS-008	Solutions_Specializations	Does Partner have the Data Warehouse Migration to Microsoft Azure Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+3e63ba14-07ba-44df-8416-22b09a15430c	SOL-AS-003	Solutions_Specializations	Does Partner have the Agentic DevOps with Microsoft Azure and GitHub Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+d5fa56d7-9a22-4f20-ad74-253c171cc8ec	SOL-SEC-001	Solutions_Specializations	Does Partner have the Security Designation?	Solutions_Specializations		text	0	True	0	
+57d02d70-bc94-424e-ae4c-0a2818e5dc4f	SOL-AS-001	Solutions_Specializations	Does Partner have the AI Platform on Microsoft Azure Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+dd393c53-6d3a-43fd-9b07-0c134e9f572c	SOL-AS-028	Solutions_Specializations	Does Partner have the Teamwork Deployment Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+1bd4da96-e031-41d5-b30b-0347514f38ec	SOL-MW-003	Solutions_Specializations	Is Partner going to target the Modern Work Designation?	Solutions_Specializations		text	0	True	0	
+585a9835-d5e7-4eba-ab06-071d07c5a8dc	SOL-AS-018	Solutions_Specializations	Does Partner have the Sales Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+9bb6a774-c32d-4422-8505-49e31b16a948	SOL-AS-032	Solutions_Specializations	Does Partner have the Threat Protection Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+3808ce48-9ab0-4118-8a76-37ba878146c5	SOL-DAI2-002	Solutions_Specializations	What is the current Digital & App Innovation Designation Score?	Solutions_Specializations		text	0	True	0	
+7fe3b0eb-8e65-48e9-9f0a-34a88187e8fe	SOL-AS-007	Solutions_Specializations	Does Partner have the AI Apps on Microsoft Azure Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+525b8d2c-1425-4ea9-a614-354aaa5f06e1	SOL-AS-025	Solutions_Specializations	Does Partner have the Custom Teams Solutions Advanced Specialization Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+9efa6bfb-7e74-4c33-81df-4ef5c3411a34	SOL-BA-002	Solutions_Specializations	What is the current Business Applications Designation Score?	Solutions_Specializations		text	0	True	0	
+3ac5c159-1637-4779-a6ad-54a9a367e4fd	SOL-AS-015	Solutions_Specializations	Does Partner have the Microsoft Low Code Application Development Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+baa009ba-85aa-4f9f-9b47-6af181857076	SOL-MW-002	Solutions_Specializations	What is the current Modern Work Designation Score?	Solutions_Specializations		text	0	True	0	
+91204128-c0a4-4742-934e-6589132ed80d	SOL-AS-029	Solutions_Specializations	Does Partner have the Cloud Security Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+7cfcdd59-2798-412f-8d87-67c01fe121ae	SOL-AS-006	Solutions_Specializations	Does Partner have the Microsoft Azure VMware Solution Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+92b4010b-56a5-4560-8739-72f50add2955	SOL-AS-002	Solutions_Specializations	Does Partner have the Analytics on Microsoft Azure Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+f266ad9a-6944-4e8d-b6c1-76fbefea041c	SOL-AS-023	Solutions_Specializations	Does Partner have the Calling for Microsoft Teams Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+fd99e2ad-c500-4b57-b754-85ba2205cee3	SOL-AS-017	Solutions_Specializations	Does Partner have the Business Intelligence Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+ae602736-4146-47ff-9c30-864a166cfe87	SOL-AS-027	Solutions_Specializations	Does Partner have the Modernize End Points Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+d5cc1b2d-78a4-46de-9ee6-8783e32de185	SOL-DAI-003	Solutions_Specializations	Is Partner going to target the Data & AI Designation?	Solutions_Specializations		text	0	True	0	
+3a822b3a-73d4-4e36-bff8-f4c979253f22	SOL-PE-002	Solutions_Specializations	Is Partner enrolled in any Advanced Specializations?	Solutions_Specializations		text	0	True	0	
+8618d357-ce9d-427c-880b-f58b0a108eb8	SOL-AS-033	Solutions_Specializations	Does Partner have the Secure AI Productivity Advanced Specialization	Solutions_Specializations		text	0	True	0	
+09b1901c-44cc-4a3b-a1f3-f788f049ce05	SOL-SEC-003	Solutions_Specializations	Is Partner going to target the Security Designation?	Solutions_Specializations		text	0	True	0	
+732f3bbd-eaf3-4736-ae1a-ea813578bfa6	SOL-AS-021	Solutions_Specializations	Does Partner have the Supply Chain Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+186557c2-71f6-4249-8342-eb554bd35f87	SOL-AS-024	Solutions_Specializations	Does Partner have the Copilot Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+5a239651-a284-41fb-b8e0-e35ad625f757	SOL-DAI-002	Solutions_Specializations	What is the current Data & AI Designation Score?	Solutions_Specializations		text	0	True	0	
+234030ca-dfc9-4f39-a05b-d824d6ff1754	SOL-INF-003	Solutions_Specializations	Is Partner going to target the Infrastructure Designation?	Solutions_Specializations		text	0	True	0	
+3f867ee0-6606-4380-88e0-db161bc00967	SOL-PE-001	Solutions_Specializations	Is Partner enrolled in any Solutions Designations?	Solutions_Specializations		text	0	True	0	
+e34359fa-1f84-48b7-8348-dd8276808380	SOL-AS-011	Solutions_Specializations	Does Partner have the Migrate Enterprise Apps to Microsoft Azure Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+ebdfe196-b362-4a2f-870d-a66dbbf1c99f	SOL-AS-004	Solutions_Specializations	Does Partner have the Hybrid Cloud Infrastructure with Microsoft Azure Stack HCI Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+c281ea82-f8ce-4ece-bcce-a7b4c782c2b6	SOL-AS-010	Solutions_Specializations	Does Partner have the Kubernetes on Microsoft Azure Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+6401c7c0-705d-4184-b09f-aa534578caad	SOL-AS-030	Solutions_Specializations	Does Partner have the Identity and Access Management Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+f7400c94-63a4-483f-8504-b2559ac8cb68	SOL-AS-014	Solutions_Specializations	Does Partner have the Finance Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+04430c89-ecaa-46c9-9878-b4152a413eca	SOL-AS-012	Solutions_Specializations	Does Partner have the SAP on Microsoft Azure Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+765f97a9-ab70-4999-a78d-b9e6a5f1db31	SOL-BA-003	Solutions_Specializations	Is Partner going to target the Business Applications Designation?	Solutions_Specializations		text	0	True	0	
+b7e798b0-4c88-482a-b226-9600ae507d9e	SOL-INF-002	Solutions_Specializations	What is the current Infrastructure Designation Score?	Solutions_Specializations		text	0	True	0	
+0e9c1547-61b7-40f1-b760-8bb50f08df4e	SOL-AS-026	Solutions_Specializations	Does Partner have the Meetings and Meeting Rooms for Microsoft Teams Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+3143c78a-99b7-4957-b53d-8ebc969a96a9	SOL-AS-022	Solutions_Specializations	Does Partner have the Adoption and Change Management Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+f31020ef-5044-4416-8dec-c4ae0b56728b	SOL-AS-016	Solutions_Specializations	Does Partner have the Intelligent Automation Advanced Specialization?	Solutions_Specializations		text	0	True	0	
+40c7ba2e-e04d-4c23-8fce-d1f2a86ea285	SOL-MW-001	Solutions_Specializations	Does Partner have the Modern Work Designation?	Solutions_Specializations		text	0	True	0	
+c9bd7e0b-e574-4c0c-aa0c-ccac2dabd50a	SOL-BA-001	Solutions_Specializations	Does Partner have the Business Applications Designation?	Solutions_Specializations		text	0	True	0	

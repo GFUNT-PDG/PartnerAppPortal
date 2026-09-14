@@ -1,0 +1,21 @@
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Routing
+
+<div class="page">
+    <header class="app-topbar">
+        <div class="app-topbar-inner">
+            <div class="brand">
+                <div class="brand-name">Partner Development Group</div>
+                <div class="brand-tag">Microsoft Partner Assessment</div>
+            </div>
+            <nav class="app-nav">
+                <NavLink href="/dashboard/employee">Employee Dashboard</NavLink>
+                <NavLink href="/dashboard/partner">Partner Portal</NavLink>
+            </nav>
+        </div>
+    </header>
+
+    <main class="app-main">
+        @Body
+    </main>
+</div>

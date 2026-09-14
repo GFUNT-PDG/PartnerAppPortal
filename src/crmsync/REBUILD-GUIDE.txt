@@ -1,0 +1,223 @@
+================================================================================
+CrmSync flow — FULL REBUILD GUIDE (Power Automate)
+Replace your current flow with this. No PartnerAppPortal code changes needed.
+SQL proc dbo.UpsertCrmAccount stays as-is.
+================================================================================
+
+ALSO READ (daily incremental watermark):
+  C:\PartnerAppPortal\src\crmsync\DAILY-INCREMENTAL-SYNC.txt
+  C:\PartnerAppPortal\src\sql\CreateCrmSyncWatermark.sql
+
+WHAT THIS FLOW DOES
+-------------------
+1. Runs on a DAILY schedule
+2. Reads last sync time from SQL (persisted watermark)
+3. Lists ONLY Accounts modified since that time
+4. For each Account:
+   - If Primary Contact exists → get that Contact's name + email
+   - Upsert into SQL dbo.CrmAccounts
+5. Saves new watermark so the next day is incremental
+6. Partner portal login matches CrmAccounts.Email (exact or domain)
+
+
+STEP 0 — SQL PREP (do this first)
+---------------------------------
+1. Run: C:\PartnerAppPortal\src\sql\CreateCrmSyncWatermark.sql
+   against pacappdb01 (Azure Query editor or SSMS)
+
+2. Confirm:
+   SELECT * FROM dbo.CrmSyncWatermark;
+   -- should show CrmAccounts / 1900-01-01...
+
+
+STEP 1 — DELETE OLD FLOW (optional)
+-----------------------------------
+1. Go to https://make.powerautomate.com
+2. My flows → find your current CrmSync flow
+3. Turn off → Delete (or keep it off as backup)
+
+
+STEP 2 — CREATE NEW SCHEDULED FLOW
+----------------------------------
+1. Create → Scheduled cloud flow
+2. Name: CrmSync-Accounts
+3. Recurrence:
+     Frequency: Day
+     Interval: 1
+     At these hours: e.g. 2:00 AM
+     Time zone: your local zone
+4. Create
+
+
+STEP 3 — GET WATERMARK (start of flow)
+--------------------------------------
+Add action: SQL Server → Execute stored procedure (V2)
+  Rename to: GetCrmSyncWatermark
+  Server: pacappsql01.database.windows.net
+  Database: pacappdb01
+  Procedure: [dbo].[GetCrmSyncWatermark]
+  WatermarkKey: CrmAccounts
+
+*** Do NOT use Initialize variable LastSyncTime = 1900.
+    That resets every run and breaks incremental sync.
+
+
+STEP 4 — LIST ROWS (ACCOUNTS)
+-----------------------------
+Add action: Microsoft Dataverse → List rows
+
+Settings:
+  Table name: Accounts
+
+  Select columns:  (paste exactly, one line — adjust cr3f8_* to match your old flow)
+    accountid,name,primarycontactid,emailaddress1,telephone1,modifiedon,cr3f8_accountexecutive,cr3f8_developmentdirector,cr3f8_customerexperiencecx
+
+  Filter rows: click fx and use:
+
+    modifiedon gt @{first(body('GetCrmSyncWatermark')?['resultsets']?['Table1'])?['LastSyncUtc']}
+
+  If that expression returns blank on first test, open the run output for
+  GetCrmSyncWatermark and adjust the path to wherever LastSyncUtc appears.
+
+
+STEP 5 — APPLY TO EACH
+----------------------
+Add action: Control → Apply to each
+  Select output: value   (from List rows)
+
+
+STEP 6 — CONDITION (INSIDE Apply to each)
+-----------------------------------------
+Add action INSIDE the loop: Control → Condition
+
+Left side:   Primary Contact  (or primarycontactid from Account)
+Operator:    is not equal to
+Right side:  (leave blank)
+
+Rename the condition to: Has Primary Contact
+
+
+STEP 7 — IF YES (has primary contact)
+-------------------------------------
+Inside YES branch:
+
+A) Add action: Microsoft Dataverse → Get a row by ID
+   Rename to: Get Primary Contact
+   Table name: Contacts
+   Row ID: Primary Contact (primarycontactid) from the Account in the loop
+   Select columns:
+     firstname,lastname,emailaddress1
+
+B) Add action: SQL Server → Execute stored procedure (V2)
+   Rename to: Upsert Account With Contact
+   Server: pacappsql01.database.windows.net
+   Database: pacappdb01
+   Procedure: [dbo].[UpsertCrmAccount]
+
+   Parameter mappings:
+     AccountId            = Account (accountid) from List rows item
+     Name                 = Account Name
+     PrimaryContact       = use Expression (click fx):
+
+       trim(concat(coalesce(outputs('Get_Primary_Contact')?['body/firstname'], ''), ' ', coalesce(outputs('Get_Primary_Contact')?['body/lastname'], '')))
+
+     AccountExecutive     = same cr3f8 field as your old flow
+     DevelopmentDirector  = same cr3f8 field as your old flow
+     CustomerExperienceCx = same cr3f8 field as your old flow
+
+     Email                = use Expression (click fx):
+
+       coalesce(outputs('Get_Primary_Contact')?['body/emailaddress1'], items('Apply_to_each')?['emailaddress1'])
+
+     Phone                = Main Phone / telephone1
+     ModifiedOn           = Modified On
+     SyncedOn             = use Expression: utcNow()
+
+
+STEP 8 — IF NO (no primary contact)
+-----------------------------------
+Inside NO branch:
+
+Add action: SQL Server → Execute stored procedure (V2)
+  Rename to: Upsert Account Only
+  Same server / database / procedure
+
+  Parameter mappings:
+    AccountId            = accountid
+    Name                 = Account Name
+    PrimaryContact       = (leave empty)
+    AccountExecutive     = same as above
+    DevelopmentDirector  = same as above
+    CustomerExperienceCx = same as above
+    Email                = Account Email (emailaddress1)   ← account only
+    Phone                = Main Phone
+    ModifiedOn           = Modified On
+    SyncedOn             = utcNow()
+
+
+STEP 9 — SET WATERMARK (END OF FLOW — OUTSIDE THE LOOP)
+-------------------------------------------------------
+After Apply to each (same level as List rows, NOT inside the loop):
+
+Add action: SQL Server → Execute stored procedure (V2)
+  Rename to: SetCrmSyncWatermark
+  Procedure: [dbo].[SetCrmSyncWatermark]
+  WatermarkKey: CrmAccounts
+  LastSyncUtc: @{utcNow()}
+
+
+STEP 10 — FINAL STRUCTURE (check this)
+--------------------------------------
+Recurrence (Daily)
+├── GetCrmSyncWatermark
+├── List rows (Accounts)   ← filter modifiedon > watermark
+│   └── Apply to each
+│       └── Condition: Has Primary Contact
+│           ├── If yes
+│           │   ├── Get Primary Contact
+│           │   └── Upsert Account With Contact
+│           └── If no
+│               └── Upsert Account Only
+└── SetCrmSyncWatermark    ← AFTER the loop
+
+
+STEP 11 — SAVE + TEST
+---------------------
+1. Save the flow
+2. Test → Run
+   First run: watermark is 1900 → full sync (expected)
+3. Confirm SQL:
+
+   SELECT * FROM dbo.CrmSyncWatermark;
+   SELECT TOP 20 Name, PrimaryContact, Email, SyncedOn
+   FROM dbo.CrmAccounts
+   ORDER BY SyncedOn DESC;
+
+4. Run again the same day → List rows should return few/no accounts
+   unless something changed in CRM
+5. Partner portal login with contact email
+
+
+FORCE FULL RESYNC LATER
+-----------------------
+UPDATE dbo.CrmSyncWatermark
+SET LastSyncUtc = '1900-01-01T00:00:00'
+WHERE WatermarkKey = N'CrmAccounts';
+
+
+COMMON MISTAKES
+---------------
+- Putting Condition AFTER List rows (wrong) — must be INSIDE Apply to each
+- Putting SetCrmSyncWatermark INSIDE Apply to each (wrong) — once per run only
+- Mapping PrimaryContact to primarycontactid GUID (wrong) — use contact name
+- Mapping Email only to Account emailaddress1 (wrong for partner login)
+- Keeping Initialize variable = 1900 (destroys incremental sync)
+- Action names in expressions must match exactly
+  Get Primary Contact → Get_Primary_Contact in expressions
+
+
+CONNECTIONS NEEDED
+------------------
+- Microsoft Dataverse (your CRM environment)
+- SQL Server (pacappsql01 / pacappdb01) — same connection as old flow
+================================================================================

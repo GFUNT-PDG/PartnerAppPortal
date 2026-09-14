@@ -1,0 +1,84 @@
+@page "/wizard/complete"
+@using PartnerAppPortal.Core.Models.Assessments
+
+@inject NavigationManager Nav
+@inject IAssessmentApiClient AssessmentApi
+@inject WizardState State
+
+<div class="wizard-step-panel">
+    <h3 class="wizard-step-title">Assessment Complete</h3>
+
+    @if (!string.IsNullOrEmpty(Error))
+    {
+        <p class="text-danger">@Error</p>
+        <div class="wizard-actions">
+            <button type="button" class="btn btn-success" @onclick="GoToDashboard">Go to Dashboard</button>
+        </div>
+    }
+    else if (Result == null)
+    {
+        <p class="text-muted">Loading final assessment results...</p>
+    }
+    else
+    {
+        <p class="wizard-step-subtitle">Assessment submitted successfully.</p>
+        <div class="wizard-review-section">
+            <p><strong>Customer:</strong> @Result.CustomerName</p>
+            <p><strong>Assessment ID:</strong> @Result.AssessmentId</p>
+            <p><strong>Overall partner score:</strong> @Result.TotalPercentage%</p>
+        </div>
+
+        @if (Result.CategoryScores?.Any() == true)
+        {
+            <div class="wizard-review-section">
+                <h4>Scores by section</h4>
+                <ul class="section-score-list">
+                    @foreach (var s in Result.CategoryScores)
+                    {
+                        <li>
+                            <span class="section-name">@s.CategoryName</span>
+                            <span class="section-pts">@s.TotalPointsEarned / @s.PotentialPoints</span>
+                            <span class="section-pct">(@s.Percentage%)</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <div class="wizard-actions">
+            <button type="button" class="btn btn-success" @onclick="GoToDashboard">Go to Dashboard</button>
+        </div>
+    }
+</div>
+
+@code {
+    public AssessmentFinalResult? Result { get; set; }
+    private string? Error { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Result = await AssessmentApi.GetFinalResultAsync(State.AssessmentId);
+        }
+        catch (Exception ex)
+        {
+            Error = $"Could not load final assessment results. Please try again later. ({ex.Message})";
+        }
+    }
+
+    private void GoToDashboard()
+    {
+        var customerKey = !string.IsNullOrWhiteSpace(State.CustomerId)
+            ? State.CustomerId
+            : Result?.CustomerId;
+
+        if (Guid.TryParse(customerKey, out var customerId) && customerId != Guid.Empty)
+        {
+            Nav.NavigateTo($"/dashboard/employee?customerId={customerId}");
+            return;
+        }
+
+        Nav.NavigateTo("/dashboard/employee");
+    }
+}

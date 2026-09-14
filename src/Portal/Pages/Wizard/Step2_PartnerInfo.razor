@@ -1,0 +1,83 @@
+@inherits PartnerAppPortal.Portal.Pages.Wizard.WizardStepBase
+@using PartnerAppPortal.Core.Models.Assessments
+@inject IAssessmentApiClient AssessmentApi
+
+<div class="wizard-step-panel">
+    <h3 class="wizard-step-title">@Title</h3>
+    <p class="wizard-step-subtitle">Basic partner identity used across the assessment.</p>
+
+    @if (!string.IsNullOrEmpty(Error))
+    {
+        <p class="text-danger">@Error</p>
+    }
+
+    @if (PartnerInfo == null)
+    {
+        <p class="text-muted">Loading partner information...</p>
+    }
+    else
+    {
+        <div class="wizard-field">
+            <label>Partner Name</label>
+            <input class="form-control" @bind="PartnerInfo.PartnerName" />
+        </div>
+
+        <div class="wizard-field">
+            <label>MPN Id</label>
+            <input class="form-control" @bind="PartnerInfo.MpnId" />
+        </div>
+
+        <div class="wizard-field">
+            <label>Country</label>
+            <input class="form-control" @bind="PartnerInfo.Country" />
+        </div>
+
+        <div class="wizard-field">
+            <label>Segment</label>
+            <input class="form-control" @bind="PartnerInfo.Segment" />
+        </div>
+
+        <div class="wizard-actions">
+            <button type="button" class="btn btn-secondary" @onclick="Back">Back</button>
+            <button type="button" class="btn btn-primary" @onclick="Next">Next</button>
+        </div>
+    }
+</div>
+
+@code {
+    public PartnerInfo? PartnerInfo { get; set; }
+    private string? Error { get; set; }
+
+    protected override string Section => "Partner_Info";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Title = "Partner Information";
+
+        try
+        {
+            PartnerInfo = await AssessmentApi.GetPartnerInfoAsync(State.AssessmentId)
+                          ?? new PartnerInfo { AssessmentId = State.AssessmentId };
+        }
+        catch (Exception ex)
+        {
+            Error = $"Could not load partner info: {ex.Message}";
+            PartnerInfo = new PartnerInfo { AssessmentId = State.AssessmentId };
+        }
+    }
+
+    private async Task Next()
+    {
+        try
+        {
+            await AssessmentApi.SavePartnerInfoAsync(State.AssessmentId, PartnerInfo!);
+            await OnNext.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Save failed: {ex.Message}";
+        }
+    }
+
+    private async Task Back() => await OnBack.InvokeAsync();
+}

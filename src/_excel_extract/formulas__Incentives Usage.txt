@@ -1,0 +1,12 @@
+﻿### SHEET: Incentives Usage usedRows=36 usedCols=4 preview=36x4
+Question | Response | Result | Score
+Referral Process Overview |  |  | 
+Has Partner activated any Benefits | Yes | =IF(OR(B3="Yes"),10,IF(OR(B3="No"),0,IF(OR(B3="Please Choose One"),"Select From ... | =C3
+Has Partner enrolled in MCI Programs | Yes | =IF(OR(B4="Yes"),10,IF(OR(B4="No"),0,IF(OR(B4="Please Choose One"),"Select From ... | =C4
+Is Partner using MCI Programs | Yes | =IF(OR(B5="Yes"),5,IF(OR(B5="No"),0,IF(OR(B5="Please Choose One"),"Select From L... | =C5
+Is Partner using Coop Funds | Yes | =IF(OR(B6="Yes"),5,IF(OR(B6="No"),0,IF(OR(B6="Please Choose One"),"Select From L... | =C6
+Is Partner a registered supplier? | Yes | =IF(OR(B7="Yes"),20,IF(OR(B7="No"),0,IF(OR(B7="Please Choose One"),"Select From ... | =C7
+Team Structure |  |  | 
+Total Points Earned |  |  | =SUM(D3:D7)+SUM(D9:D10)+SUM(D12:D17)+SUM(D19:D23)+SUM(D25:D32)
+Partner Progress Score for CSP |  |  | =D34/100*100%
+Potential Score |  |  | 1

@@ -1,0 +1,99 @@
+@inherits PartnerAppPortal.Portal.Pages.Wizard.WizardStepBase
+@using PartnerAppPortal.Core.Models.Assessments
+@inject IAssessmentApiClient AssessmentApi
+
+<div class="wizard-step-panel">
+    <h3 class="wizard-step-title">Review & Submit</h3>
+    <p class="wizard-step-subtitle">Scan the section summary, then submit the assessment.</p>
+
+    @if (!string.IsNullOrEmpty(Error))
+    {
+        <p class="text-danger">@Error</p>
+    }
+
+    @if (Summary == null)
+    {
+        <p class="text-muted">Loading assessment summary...</p>
+    }
+    else
+    {
+        @foreach (var section in Summary)
+        {
+            <div class="wizard-review-section">
+                <h4>@FriendlyCategory(section.Key)</h4>
+                <ul>
+                    @foreach (var item in section.Value)
+                    {
+                        <li>
+                            <strong>@item.QuestionText:</strong>
+                            @(string.IsNullOrWhiteSpace(item.Response) ? "—" : item.Response)
+                            @if (item.Score is not null)
+                            {
+                                <span class="text-muted"> (@item.Score pts)</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <div class="wizard-actions">
+            <button type="button" class="btn btn-secondary" @onclick="Back">Back</button>
+            <button type="button" class="btn btn-submit-assessment" @onclick="Submit">Submit Assessment</button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(ResultMessage))
+    {
+        <p class="text-success mt-3">@ResultMessage</p>
+    }
+</div>
+
+@code {
+    public Dictionary<string, List<AssessmentReviewItem>>? Summary { get; set; }
+    public string? ResultMessage { get; set; }
+    private string? Error { get; set; }
+
+    protected override string Section => "ReviewSubmit";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Summary = await AssessmentApi.GetAssessmentSummaryAsync(State.AssessmentId)
+                      ?? new Dictionary<string, List<AssessmentReviewItem>>();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Could not load assessment summary: {ex.Message}";
+            Summary = new Dictionary<string, List<AssessmentReviewItem>>();
+        }
+    }
+
+    private static string FriendlyCategory(string key) => key switch
+    {
+        "Solutions_Specializations" => "Solutions and Specializations",
+        "CSP" => "Customers & CSP",
+        "CoSell" => "Co-Sell & Referrals",
+        "MarketPlace" => "Marketplace Offers",
+        "Incentives" => "Incentives Usage",
+        "Partner_Info" => "Partner Information",
+        _ => key.Replace('_', ' ')
+    };
+
+    private async Task Submit()
+    {
+        try
+        {
+            var result = await AssessmentApi.SubmitAssessmentAsync(State.AssessmentId);
+            ResultMessage = $"Assessment submitted successfully. Total Score: {result.TotalScore}";
+            await OnNext.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Submit failed: {ex.Message}";
+        }
+    }
+
+    private async Task Back() => await OnBack.InvokeAsync();
+}

@@ -1,0 +1,36 @@
+﻿### SHEET: Co-sell & Referrals usedRows=36 usedCols=5 preview=36x5
+Questions | Response | Result | Score | scoring logic:
+Referral Process Overview |  |  |  | 
+Is Partner currently submitting Co-Sell Referrals to Microsoft? | Yes | =IF(OR(B3="Yes"),5,IF(OR(B3="No"),0,IF(OR(B3="Please Choose One"),"Select From L... | =C3 | 
+What type of referrals is Partner submitting? | IP Co-Sell |  | Not Applicable | 
+Does Partner have an automated method of submitted referrals? | Yes | =IF(OR(B5="Yes"),5,IF(OR(B5="No"),0,IF(OR(B5="Please Choose One"),"Select From L... | =C5 | 
+If yes, what solution are they using? |  |  | Not Applicable | 
+Is partner resubmitting expired referrals? | No | =IF(OR(B7="Yes"),5,IF(OR(B7="No"),0,IF(OR(B7="Please Choose One"),"Select From L... | =C7 | 
+Team Structure |  |  |  | 
+Does Partner have a responsible person for submitting referrals? | Yes | =IF(OR(B9="Yes"),5,IF(OR(B9="No"),0,IF(OR(B9="Please Choose One"),"Select From L... | =C9 | 
+Is this process documented as a standard SOP? | Yes | =IF(OR(B10="Yes"),5,IF(OR(B10="No"),0,IF(OR(B10="Please Choose One"),"Select Fro... | =C10 | 
+Inbound Leads |  |  |  | 
+Is Partner receiving inbound leads from Microsoft? | Yes | =IF(OR(B12="Yes"),5,IF(OR(B12="No"),0,IF(OR(B12="Please Choose One"),"Select Fro... | =C12 | 
+If yes, How Many in the past 12 months? | 0 |  | Not Applicable | 
+Does Partner have a responsible person for accepting leads? | Yes | =IF(OR(B14="Yes"),5,IF(OR(B14="No"),0,IF(OR(B14="Please Choose One"),"Select Fro... | =C14 | 
+Is this process documented as a standard SOP? | No | =IF(OR(B15="Yes"),5,IF(OR(B15="No"),0,IF(OR(B15="Please Choose One"),"Select Fro... | =C15 | 
+Does Partner have an automated method for syncing leads to CRM? | No | =IF(OR(B16="Yes"),5,IF(OR(B16="No"),0,IF(OR(B16="Please Choose One"),"Select Fro... | =C16 | 
+If yes, what solution are they using? | None |  | Not Applicable | 
+P2P Referrals |  |  |  | 
+Is Partner doing P2P business? | Yes | =IF(OR(B19="Yes"),5,IF(OR(B19="No"),0,IF(OR(B19="Please Choose One"),"Select Fro... | =C19 | 
+If yes, is Partner sharing P2P deals in Partner center? | No | =IF(OR(B20="Yes"),5,IF(OR(B20="No"),0,IF(OR(B20="Please Choose One"),"Select Fro... | =C20 | 
+If yes, are inbound deals being accepted in Partner Center? | No | =IF(OR(B21="Yes"),5,IF(OR(B21="No"),0,IF(OR(B21="Please Choose One"),"Select Fro... | =C21 | 
+Does Partner have a responsible person for accepting P2P referrals? | No | =IF(OR(B22="Yes"),5,IF(OR(B22="No"),0,IF(OR(B22="Please Choose One"),"Select Fro... | =C22 | 
+Is this process documented as a standard SOP? | No | =IF(OR(B23="Yes"),5,IF(OR(B23="No"),0,IF(OR(B23="Please Choose One"),"Select Fro... | =C23 | 
+Customer Details |  |  |  | 
+How Many Referrals has partner submitted? | 3 |  | Not Applicable | 
+New Referrals in the past 3 months | 3 |  | Not Applicable | 
+New Referrals in the past 6 months | 3 |  | Not Applicable | 
+New Referrals in the past 12 months | 3 | =MIN(1,B28/20)*100% | =IF(C28<=20%,4,IF(AND(C28>20%,C28<41%),8,IF(AND(C28>40%,C28<61%),12,IF(AND(C28>6... | 
+New Referrals in the past 24 months | 3 |  | Not Applicable | 
+How many Referrals has Microsoft accepted? | 0 |  | Not Applicable | 
+Is Partner tracking deals submitted versus not submitted? | No | =IF(OR(B31="Yes"),5,IF(OR(B31="No"),0,IF(OR(B31="Please Choose One"),"Select Fro... | =C31 | 
+If yes, how are they being tracked? | None |  | Not Applicable | 
+Total Points Earned |  |  | =SUM(D3:D7)+SUM(D9:D10)+SUM(D12:D17)+SUM(D19:D23)+SUM(D25:D32) | 
+Partner Progress Score for Co-Sell Utilization |  |  | =D34/100*100% | 
+Potential Score |  |  | 1 | 

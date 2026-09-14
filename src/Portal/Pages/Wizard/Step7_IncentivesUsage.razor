@@ -1,0 +1,89 @@
+@inherits PartnerAppPortal.Portal.Pages.Wizard.WizardStepBase
+@using PartnerAppPortal.Core.Models.Assessments
+@inject IAssessmentApiClient AssessmentApi
+
+<h3>@Title</h3>
+
+@if (!string.IsNullOrEmpty(Error))
+{
+    <p class="text-danger">@Error</p>
+}
+
+@if (Incentives == null)
+{
+    <p>Loading incentives usage...</p>
+}
+else
+{
+    <div class="mb-3">
+        <label>Incentives Earned ($)</label>
+        <input type="number"
+               class="form-control"
+               @bind="Incentives.Earned" />
+    </div>
+
+    <div class="mb-3">
+        <label>Incentives Redeemed ($)</label>
+        <input type="number"
+               class="form-control"
+               @bind="Incentives.Redeemed" />
+    </div>
+
+    <div class="mb-3">
+        <label>Incentives Balance ($)</label>
+        <input type="number"
+               class="form-control"
+               @bind="Incentives.Balance" />
+    </div>
+
+    <div class="mb-3">
+        <label>Incentives Growth (%)</label>
+        <input type="number"
+               class="form-control"
+               @bind="Incentives.Growth" />
+    </div>
+
+    <button class="btn btn-secondary" @onclick="Back">Back</button>
+    <button class="btn btn-primary" @onclick="Next">Next</button>
+}
+
+@code {
+    public IncentivesUsage? Incentives { get; set; }
+    private string? Error { get; set; }
+
+    protected override string Section => "Incentives_Usage";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Title = "Incentives Usage";
+
+        try
+        {
+            Incentives = await AssessmentApi.GetIncentivesUsageAsync(State.AssessmentId)
+                         ?? new IncentivesUsage();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Could not load incentives usage: {ex.Message}";
+            Incentives = new IncentivesUsage();
+        }
+    }
+
+    private async Task Next()
+    {
+        try
+        {
+            await AssessmentApi.SaveIncentivesUsageAsync(State.AssessmentId, Incentives!);
+            await OnNext.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Save failed: {ex.Message}";
+        }
+    }
+
+    private async Task Back()
+    {
+        await OnBack.InvokeAsync();
+    }
+}

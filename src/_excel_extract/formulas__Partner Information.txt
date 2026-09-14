@@ -1,0 +1,14 @@
+﻿### SHEET: Partner Information usedRows=22 usedCols=4 preview=22x4
+ | Current | Date | Difference
+ |  | 46143 | 
+Potential Score | 1 | 1 | =B7-C7
+Partner Score Total | =SUM(B9:B13)/5 | 0.2 | =B8-C8
+Solutions and Specializations | ='Solutions and Specializations'!D60 | 0.19 | =B9-C9
+Customers & CSP | ='Customer & CSP Workbook'!D36 | 0.56 | =B10-C10
+Co-Sell & Referrals | ='Co-sell & Referrals'!D35 | 0.09 | =B11-C11
+Marketplace Usage | ='Marketplace Offers'!D35 | 0.09 | =B12-C12
+Incentives Usage | ='Incentives Usage'!D35 | 0.09 | =B13-C13
+ |  | CRM Field | 
+Partner Name |  | (Field Name) | 
+Partner Contact |  | (Primary Contact) | 
+Account Exec |  | (Account Executive) | 

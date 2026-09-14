@@ -1,0 +1,23 @@
+﻿### SHEET: Marketplace Offers usedRows=36 usedCols=4 preview=36x4
+Questions | Response | Result | Score
+Marketplace Setup |  |  | 
+Does Partner have a Publisher ID? | Yes | 5 | 5
+Is Partner working on publishing new offers in the marketplace? | Yes | 5 | 5
+Team Structure |  |  | 
+Does Partner have someone dedicated to building and updating offers? | Yes | 5 | 5
+ | No | 0 | 0
+Inbound Leads |  |  | 
+P2P Offerings |  |  | 
+Does partner have any co-branded offers? | No | 0 | 0
+Marketplace Offers |  |  | 
+How Many Marketplace Offers does Partner have? | 0 |  | Not Applicable
+How many offers have been created in the past 3 months? | 0 |  | Not Applicable
+How many offers have been created in the past 6 months? | 0 |  | Not Applicable
+How many offers have been created in the past 12 months | 0 | 0% | 
+Does partner have any Co-Sell ready offers? | No | 0 | 0
+Does partner hae any Transactable offers? | No | 0 | 0
+Is partner utilizing private or resell offers? | No | 0 | 0
+Does Partner review their offers regularly for fit? | Yes | 5 | 5
+Total Points Earned |  |  | 20
+Partner Progress Score for Marketplace |  |  | 20%
+Potential Score |  |  | 100%

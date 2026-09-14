@@ -1,0 +1,442 @@
+@page "/dashboard/employee"
+@using PartnerAppPortal.Core.Models.Assessments
+@using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Portal.Services
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+
+<div class="portal-page">
+    <div class="eyebrow">Employee Portal</div>
+    <h1 class="portal-title">Employee Dashboard</h1>
+    <p class="portal-subtitle">Select a customer to begin the assessment.</p>
+
+    @if (!string.IsNullOrEmpty(LoadError))
+    {
+        <p class="text-danger">@LoadError</p>
+    }
+
+    @if (!string.IsNullOrEmpty(StatusMessage))
+    {
+        <p class="text-danger">@StatusMessage</p>
+    }
+
+    <div class="portal-panel">
+        <label class="portal-label" for="customerSelect">Select Customer</label>
+        <select id="customerSelect" class="form-select portal-input" @bind="SelectedCustomerIdValue">
+            <option value="">-- Select a customer --</option>
+            @foreach (var customer in Customers)
+            {
+                <option value="@customer.Id.ToString()">@customer.Name</option>
+            }
+        </select>
+
+        <button type="button" class="btn btn-primary portal-btn" @onclick="ConfirmAndContinueAsync">
+            Confirm
+        </button>
+    </div>
+
+    @if (SelectedCustomerId != Guid.Empty)
+    {
+        <div class="portal-results">
+            <h2 class="portal-section-title">Customer: @SelectedCustomerName</h2>
+
+            @if (ProgressCompare is not null)
+            {
+                <div class="score-card hero-score mb-3">
+                    <div class="score-top">
+                        <div class="score-name">Partner score</div>
+                        <div class="score-val">@ProgressCompare.LatestOverall%</div>
+                    </div>
+                    @if (ProgressCompare.HasOnboarding)
+                    {
+                        <p class="score-note mb-0">
+                            Onboarding (@ProgressCompare.InitialDate): <strong>@ProgressCompare.InitialOverall%</strong>
+                            → Current (@ProgressCompare.LatestDate): <strong>@ProgressCompare.LatestOverall%</strong>
+                            <span class="score-delta @DeltaClass(ProgressCompare.OverallDelta)">@FormatDelta(ProgressCompare.OverallDelta)</span>
+                        </p>
+                    }
+                </div>
+
+                @if (ProgressCompare.SectionDeltas.Any())
+                {
+                    <div class="section-score-board mb-4">
+                        <table class="section-score-board-table">
+                            <thead>
+                                <tr>
+                                    <th>Section Scores</th>
+                                    <th>Onboarding Assessment Score</th>
+                                    <th>Current Assessment Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var s in ProgressCompare.SectionDeltas)
+                                {
+                                    <tr>
+                                        <td class="ssb-name">@s.CategoryName</td>
+                                        <td class="ssb-score">@FormatBoardScore(s.BaselinePercentage, s.PotentialPoints)</td>
+                                        <td class="ssb-score">@FormatBoardScore(s.Percentage, s.PotentialPoints, s.TotalPointsEarned)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+
+            <h3 class="portal-section-title">Previous Assessments</h3>
+
+            @if (PreviousAssessments is null)
+            {
+                <p>Loading assessments...</p>
+            }
+            else if (!PreviousAssessments.Any())
+            {
+                <p>No previous assessments found.</p>
+            }
+            else
+            {
+                <div class="portal-table-wrap">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Overall</th>
+                                <th>Section scores</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var a in PreviousAssessments)
+                            {
+                                <tr>
+                                    <td>@(a.SubmittedAt?.ToString("MM/dd/yyyy") ?? "—")</td>
+                                    <td>
+                                        <strong>@a.TotalScore%</strong>
+                                        @if (a.BaselineOverallScore is not null && a.OverallDelta is not null && a.OverallDelta != 0)
+                                        {
+                                            <div class="score-delta @DeltaClass(a.OverallDelta)">
+                                                Initial @a.BaselineOverallScore% → @FormatDelta(a.OverallDelta)
+                                            </div>
+                                        }
+                                    </td>
+                                    <td class="section-scores-cell">
+                                        @if (a.SectionScores?.Any() == true)
+                                        {
+                                            <ul class="section-score-list">
+                                                @foreach (var s in a.SectionScores)
+                                                {
+                                                    <li>
+                                                        <span class="section-name">@s.CategoryName</span>
+                                                        <span class="section-pts">@s.TotalPointsEarned / @s.PotentialPoints (@s.Percentage%)</span>
+                                                        @if (s.DeltaPercentage is not null && s.DeltaPercentage != 0)
+                                                        {
+                                                            <span class="section-pct @DeltaClass(s.DeltaPercentage)">
+                                                                @s.BaselinePercentage% → @FormatDelta(s.DeltaPercentage)
+                                                            </span>
+                                                        }
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No scored answers yet</span>
+                                        }
+                                    </td>
+                                    <td>@(a.SubmittedAt == null ? "In Progress" : "Submitted")</td>
+                                    <td class="assessment-actions">
+                                        <button type="button" class="btn btn-outline-primary btn-sm"
+                                                @onclick="() => ReviseAssessment(a.Id)">
+                                            Revise
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                disabled="@(DeletingId == a.Id)"
+                                                @onclick="() => DeleteAssessmentAsync(a)">
+                                            @(DeletingId == a.Id ? "Deleting..." : "Delete")
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            <button type="button" class="btn btn-success portal-btn portal-btn-secondary" @onclick="StartNewAssessment">
+                Start New Assessment
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Inject] NavigationManager Nav { get; set; } = default!;
+    [Inject] IAssessmentApiClient AssessmentApi { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "customerId")]
+    public Guid? CustomerIdFromQuery { get; set; }
+
+    private List<Customer> Customers { get; set; } = new();
+    private string SelectedCustomerIdValue { get; set; } = string.Empty;
+    private Guid SelectedCustomerId { get; set; }
+    private string? SelectedCustomerName { get; set; }
+    private string? LoadError { get; set; }
+    private string? StatusMessage { get; set; }
+    private List<AssessmentModel>? PreviousAssessments { get; set; }
+    private ProgressCompareModel? ProgressCompare { get; set; }
+    private Guid? DeletingId { get; set; }
+    private bool _autoOpenedFromQuery;
+
+    private sealed class ProgressCompareModel
+    {
+        public string InitialDate { get; set; } = "";
+        public string LatestDate { get; set; } = "";
+        public decimal InitialOverall { get; set; }
+        public decimal LatestOverall { get; set; }
+        public bool HasOnboarding { get; set; }
+        public decimal OverallDelta => Math.Round(LatestOverall - InitialOverall, 1);
+        public List<CategoryScoreResult> SectionDeltas { get; set; } = new();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Customers = await AssessmentApi.GetCustomersAsync() ?? new();
+        }
+        catch (Exception ex)
+        {
+            LoadError = $"Could not load customers: {ex.Message}";
+            Customers = new();
+        }
+
+        if (!_autoOpenedFromQuery &&
+            CustomerIdFromQuery is Guid qid &&
+            qid != Guid.Empty)
+        {
+            _autoOpenedFromQuery = true;
+            SelectedCustomerIdValue = qid.ToString();
+            await ConfirmAndContinueAsync();
+        }
+    }
+
+    private async Task ConfirmAndContinueAsync()
+    {
+        StatusMessage = null;
+        ProgressCompare = null;
+
+        if (!Guid.TryParse(SelectedCustomerIdValue, out var id) || id == Guid.Empty)
+        {
+            StatusMessage = "Please choose a customer from the dropdown first.";
+            return;
+        }
+
+        var customer = Customers.FirstOrDefault(c => c.Id == id);
+        if (customer is null)
+        {
+            StatusMessage = "Selected customer was not found. Refresh the page and try again.";
+            return;
+        }
+
+        SelectedCustomerId = customer.Id;
+        SelectedCustomerName = customer.Name ?? customer.Id.ToString();
+        PreviousAssessments = null;
+
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            PreviousAssessments = await AssessmentApi.GetAssessmentsByCustomerAsync(customer.Id);
+            ProgressCompare = BuildProgressCompare(PreviousAssessments);
+        }
+        catch (Exception ex)
+        {
+            PreviousAssessments = new();
+            StatusMessage = $"Could not load previous assessments (you can still start a new one): {ex.Message}";
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static ProgressCompareModel? BuildProgressCompare(List<AssessmentModel> list)
+    {
+        var submitted = list
+            .Where(a => a.SubmittedAt != null && a.SectionScores?.Any() == true)
+            .OrderBy(a => a.SubmittedAt)
+            .ToList();
+
+        if (submitted.Count == 0)
+            return null;
+
+        // Onboarding = first assessment for this customer (fixed).
+        // Current = latest assessment / revision (moves each time).
+        var first = submitted.First();
+        var latest = submitted.Last();
+        var sameRecord = first.Id == latest.Id;
+
+        var orderedNames = latest.SectionScores.Select(s => s.CategoryName).ToList();
+        foreach (var s in first.SectionScores)
+        {
+            if (!orderedNames.Any(n => string.Equals(n, s.CategoryName, StringComparison.OrdinalIgnoreCase)))
+                orderedNames.Add(s.CategoryName);
+        }
+
+        var rows = new List<CategoryScoreResult>();
+        foreach (var name in orderedNames)
+        {
+            var firstSection = first.SectionScores.FirstOrDefault(s =>
+                string.Equals(s.CategoryName, name, StringComparison.OrdinalIgnoreCase));
+            var latestSection = latest.SectionScores.FirstOrDefault(s =>
+                string.Equals(s.CategoryName, name, StringComparison.OrdinalIgnoreCase));
+
+            var max = SectionMaxPoints(name);
+            var earned = latestSection?.TotalPointsEarned ?? 0m;
+            var currentPct = max == 0
+                ? 0
+                : Math.Round((double)earned / (double)max * 100.0, 1);
+
+            // Revised in place: use locked section baselines only — never fall back to current %,
+            // or onboarding mirrors current when SectionScoresJson was saved empty.
+            double? onboardingPct;
+            if (sameRecord)
+            {
+                onboardingPct = firstSection?.BaselinePercentage;
+                if (onboardingPct is null && first.BaselineOverallScore is null)
+                    onboardingPct = firstSection is null
+                        ? null
+                        : (max == 0 ? 0 : Math.Round((double)firstSection.TotalPointsEarned / (double)max * 100.0, 1));
+            }
+            else if (firstSection is not null)
+            {
+                onboardingPct = Math.Round((double)firstSection.TotalPointsEarned / (double)max * 100.0, 1);
+            }
+            else
+            {
+                onboardingPct = null;
+            }
+
+            // Legacy baselines were stored as /100 percentages (== points earned). Re-scale when needed.
+            if (onboardingPct is not null &&
+                firstSection?.PotentialPoints == 100m &&
+                max != 100m)
+            {
+                onboardingPct = Math.Round(onboardingPct.Value / (double)max * 100.0, 1);
+            }
+
+            rows.Add(new CategoryScoreResult
+            {
+                CategoryName = name,
+                BaselinePercentage = onboardingPct,
+                Percentage = currentPct,
+                TotalPointsEarned = earned,
+                PotentialPoints = max
+            });
+        }
+
+        decimal onboardingOverall = sameRecord && first.BaselineOverallScore is not null
+            ? first.BaselineOverallScore.Value
+            : first.TotalScore;
+
+        var currentOverall = rows.Count == 0
+            ? latest.TotalScore
+            : (decimal)Math.Round(rows.Average(r => r.Percentage), 1);
+
+        var onboardRows = rows.Where(r => r.BaselinePercentage is not null).ToList();
+        if (onboardRows.Count > 0)
+            onboardingOverall = (decimal)Math.Round(onboardRows.Average(r => r.BaselinePercentage!.Value), 1);
+
+        return new ProgressCompareModel
+        {
+            InitialDate = first.SubmittedAt?.ToString("MM/dd/yyyy") ?? "Onboarding",
+            LatestDate = latest.SubmittedAt?.ToString("MM/dd/yyyy") ?? "Current",
+            InitialOverall = onboardingOverall,
+            LatestOverall = currentOverall,
+            HasOnboarding = true,
+            SectionDeltas = rows
+        };
+    }
+
+    private static decimal SectionMaxPoints(string categoryName) => categoryName switch
+    {
+        "Solutions and Specializations" => 100m,
+        "Customers & CSP" => 100m,
+        "Co-Sell & Referrals" => 80m,
+        "Marketplace Offers" => 65m,
+        "Incentives Usage" => 50m,
+        _ => 100m
+    };
+
+    private static string FormatBoardScore(double? percentage, decimal potential, decimal? earned = null)
+    {
+        if (percentage is null && earned is null) return "";
+        var max = potential > 0 ? potential : 100m;
+        var pts = earned ?? (percentage is null
+            ? 0m
+            : (decimal)Math.Round(percentage.Value / 100.0 * (double)max, 0));
+        var pct = percentage is null
+            ? Math.Round((double)pts / (double)max * 100.0, 0)
+            : Math.Round(percentage.Value, 0);
+        return $"{pts} / {max} ({pct}%)";
+    }
+
+    private static string FormatDelta(decimal? delta)
+    {
+        if (delta is null) return "—";
+        return delta.Value >= 0 ? $"+{delta.Value}%" : $"{delta.Value}%";
+    }
+
+    private static string FormatDelta(double? delta)
+    {
+        if (delta is null) return "—";
+        return delta.Value >= 0 ? $"+{delta.Value}%" : $"{delta.Value}%";
+    }
+
+    private static string DeltaClass(decimal? delta) =>
+        delta is null ? "" : delta >= 0 ? "delta-up" : "delta-down";
+
+    private static string DeltaClass(double? delta) =>
+        delta is null ? "" : delta >= 0 ? "delta-up" : "delta-down";
+
+    private void StartNewAssessment()
+    {
+        if (SelectedCustomerId == Guid.Empty)
+            return;
+
+        Nav.NavigateTo($"/assessment/start/{SelectedCustomerId}");
+    }
+
+    private void ReviseAssessment(Guid assessmentId)
+    {
+        Nav.NavigateTo($"/assessment/wizard/{assessmentId}");
+    }
+
+    private async Task DeleteAssessmentAsync(AssessmentModel assessment)
+    {
+        StatusMessage = null;
+
+        var when = assessment.SubmittedAt?.ToString("MM/dd/yyyy") ?? "in progress";
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"Delete this assessment ({when}) for {SelectedCustomerName}? This cannot be undone.");
+
+        if (!confirmed)
+            return;
+
+        DeletingId = assessment.Id;
+        try
+        {
+            await AssessmentApi.DeleteAssessmentAsync(assessment.Id);
+            PreviousAssessments = await AssessmentApi.GetAssessmentsByCustomerAsync(SelectedCustomerId);
+            ProgressCompare = BuildProgressCompare(PreviousAssessments);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Delete failed: {ex.Message}";
+        }
+        finally
+        {
+            DeletingId = null;
+        }
+    }
+}

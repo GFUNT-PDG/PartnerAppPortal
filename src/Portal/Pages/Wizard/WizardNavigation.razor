@@ -1,0 +1,34 @@
+@namespace PartnerAppPortal.Portal.Pages.Wizard
+
+<div class="wizard-nav" role="navigation" aria-label="Assessment steps">
+    @for (int i = 0; i < StepLabels.Length; i++)
+    {
+        var step = i + 1;
+        var label = StepLabels[i];
+        <button type="button"
+                class="wizard-step @(step == CurrentStep ? "active" : null)"
+                title="@label"
+                @onclick="() => OnStepChanged.InvokeAsync(step)">
+            <span>@step.</span> @label
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public int CurrentStep { get; set; }
+    [Parameter] public int TotalSteps { get; set; } = 9;
+    [Parameter] public EventCallback<int> OnStepChanged { get; set; }
+
+    private static readonly string[] StepLabels =
+    {
+        "CRM",
+        "Partner Info",
+        "Solutions",
+        "CSP",
+        "Co-Sell",
+        "Marketplace",
+        "Incentives",
+        "Review",
+        "Complete"
+    };
+}

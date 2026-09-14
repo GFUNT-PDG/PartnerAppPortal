@@ -1,0 +1,133 @@
+/* Keep component styles aligned with PDG shell (site.css is source of truth for tokens) */
+
+.wq-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid #f2ecdd;
+}
+
+.wq-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.35;
+}
+
+.wq-control {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.wq-input {
+    width: 200px;
+    max-width: 42vw;
+}
+
+.wq-locked .wq-label {
+    color: #8a867c;
+}
+
+.wq-lock-hint {
+    margin-top: 0.2rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #9a8f6e;
+}
+
+.yn-switch {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.yn-switch.disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.yn-text {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #9aa0a6;
+    min-width: 1.6rem;
+    text-align: center;
+}
+
+.yn-text.on { color: #1b1b1b; }
+
+.yn-track {
+    position: relative;
+    width: 48px;
+    height: 28px;
+    border-radius: 999px;
+    display: inline-block;
+    transition: background-color 0.15s ease;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.yn-track.no { background-color: #b0b6be; }
+.yn-track.yes { background-color: #C2A761; }
+
+.yn-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease;
+}
+
+.yn-track.yes .yn-knob { transform: translateX(20px); }
+
+::deep .wizard-group {
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem 0.35rem;
+    border: 1px solid #e9e0cd;
+    border-radius: 12px;
+}
+
+::deep .wizard-group.tone-a {
+    background: #faf5ea;
+    border-color: #e9e0cd;
+}
+
+::deep .wizard-group.tone-b {
+    background: #fff;
+    border-color: #e9e0cd;
+    border-left: 4px solid #C2A761;
+}
+
+::deep .wizard-subsection {
+    margin: 0 0 0.65rem;
+    padding: 0.2rem 0 0.55rem;
+    border-bottom: 1px solid #f2ecdd;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #594618;
+}
+
+@media (max-width: 640px) {
+    .wq-row {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .wq-control {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

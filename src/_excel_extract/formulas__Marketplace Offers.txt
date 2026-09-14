@@ -1,0 +1,23 @@
+﻿### SHEET: Marketplace Offers usedRows=36 usedCols=4 preview=36x4
+Questions | Response | Result | Score
+Marketplace Setup |  |  | 
+Does Partner have a Publisher ID? | Yes | =IF(OR(B3="Yes"),5,IF(OR(B3="No"),0,IF(OR(B3="Please Choose One"),"Select From L... | =C3
+Is Partner working on publishing new offers in the marketplace? | Yes | =IF(OR(B4="Yes"),5,IF(OR(B4="No"),0,IF(OR(B4="Please Choose One"),"Select From L... | =C4
+Team Structure |  |  | 
+Does Partner have someone dedicated to building and updating offers? | Yes | =IF(OR(B9="Yes"),5,IF(OR(B9="No"),0,IF(OR(B9="Please Choose One"),"Select From L... | =C9
+ | No | =IF(OR(B10="Yes"),5,IF(OR(B10="No"),0,IF(OR(B10="Please Choose One"),"Select Fro... | =C10
+Inbound Leads |  |  | 
+P2P Offerings |  |  | 
+Does partner have any co-branded offers? | No | =IF(OR(B19="Yes"),5,IF(OR(B19="No"),0,IF(OR(B19="Please Choose One"),"Select Fro... | =C19
+Marketplace Offers |  |  | 
+How Many Marketplace Offers does Partner have? | 0 |  | Not Applicable
+How many offers have been created in the past 3 months? | 0 |  | Not Applicable
+How many offers have been created in the past 6 months? | 0 |  | Not Applicable
+How many offers have been created in the past 12 months | 0 | =MIN(1,B28/20)*100% | =IF(AND(C28>=1%,C28<=20%),4,IF(AND(C28>20%,C28<41%),8,IF(AND(C28>40%,C28<61%),12...
+Does partner have any Co-Sell ready offers? | No | =IF(OR(B29="Yes"),5,IF(OR(B29="No"),0,IF(OR(B29="Please Choose One"),"Select Fro... | =C29
+Does partner hae any Transactable offers? | No | =IF(OR(B30="Yes"),5,IF(OR(B30="No"),0,IF(OR(B30="Please Choose One"),"Select Fro... | =C30
+Is partner utilizing private or resell offers? | No | =IF(OR(B31="Yes"),5,IF(OR(B31="No"),0,IF(OR(B31="Please Choose One"),"Select Fro... | =C31
+Does Partner review their offers regularly for fit? | Yes | =IF(OR(B32="Yes"),5,IF(OR(B32="No"),0,IF(OR(B32="Please Choose One"),"Select Fro... | =C32
+Total Points Earned |  |  | =SUM(D3:D7)+SUM(D9:D10)+SUM(D12:D17)+SUM(D19:D23)+SUM(D25:D32)
+Partner Progress Score for Marketplace |  |  | =D34/100*100%
+Potential Score |  |  | 1

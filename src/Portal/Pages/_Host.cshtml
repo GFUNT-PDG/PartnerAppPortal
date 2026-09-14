@@ -1,0 +1,27 @@
+@page "/"
+@namespace PartnerAppPortal.Portal.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDG Partner Assessment</title>
+    <base href="~/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/site.css?v=20260911spechot1" rel="stylesheet" />
+    <link href="Portal.styles.css?v=20260910pdg2" rel="stylesheet" />
+    <meta name="color-scheme" content="light" />
+</head>
+<body>
+    <div id="app">
+        @(await Html.RenderComponentAsync<App>(RenderMode.Server))
+    </div>
+
+    <div id="blazor-error-ui" style="display:none; background:#f8d7da; padding:1rem;">
+        A connection error occurred. Please refresh the page.
+    </div>
+
+    <script src="_framework/blazor.server.js"></script>
+</body>
+</html>
