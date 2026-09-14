@@ -1,0 +1,17 @@
+﻿---
+description: Repo naming — App Development vs new production
+alwaysApply: true
+---
+
+# Repository names (Gary)
+
+When Gary refers to these repos, use these names exactly:
+
+| Spoken name | Path | Role |
+|-------------|------|------|
+| **App Development** | `C:\PartnerAppPortal\src` | Active development / current working app |
+| **new production** | `C:\PartnerAppPortal\Production\v.1` | Migration baseline for the new Azure subscription |
+
+- “App Development” = the previous repo we built features in (Portal, API, CRM sync, scoring).
+- “new production” = the full dump created for subscription migration (local git; Key Vault / SPN work targets this).
+- Do not mix changes across repos unless Gary explicitly asks to sync or promote.
