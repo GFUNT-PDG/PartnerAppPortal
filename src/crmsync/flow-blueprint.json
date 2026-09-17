@@ -2,6 +2,8 @@
   "flowName": "CrmSync-Accounts",
   "description": "Reference blueprint for rebuilding the Power Automate CrmSync flow. Import of raw JSON into Power Automate usually requires remapping connections — prefer REBUILD-GUIDE.txt for first-time setup.",
   "sqlProcedure": "[dbo].[UpsertCrmAccount]",
+  "sqlAccessProcedure": "[dbo].[SetCrmAccountSalesAcceleratorAccess]",
+  "sqlAccessScript": "sql/AddCrmAccountSalesAcceleratorAccess.sql",
   "sqlServer": "pacappsql01.database.windows.net",
   "sqlDatabase": "pacappdb01",
   "structure": [
@@ -11,19 +13,22 @@
     "  Condition Has_Primary_Contact",
     "    YES: Get_Primary_Contact (Contacts by primarycontactid)",
     "    YES: Upsert_Account_With_Contact (SQL UpsertCrmAccount)",
-    "    NO:  Upsert_Account_Only (SQL UpsertCrmAccount)"
+    "    YES: Set_Sales_Accelerator_Access_With_Contact (SQL SetCrmAccountSalesAcceleratorAccess)",
+    "    NO:  Upsert_Account_Only (SQL UpsertCrmAccount)",
+    "    NO:  Set_Sales_Accelerator_Access_Only (SQL SetCrmAccountSalesAcceleratorAccess)"
   ],
   "listRowsAccounts": {
     "table": "accounts",
-    "selectColumns": "accountid,name,primarycontactid,emailaddress1,telephone1,modifiedon,cr3f8_accountexecutive,cr3f8_developmentdirector,cr3f8_customerexperiencecx",
-    "selectColumnsNote": "Replace cr3f8_* with the exact logical names from your old flow if different.",
+    "selectColumns": "accountid,name,primarycontactid,emailaddress1,telephone1,modifiedon,cr3f8_accountexecutive,cr3f8_developmentdirector,cr3f8_customerexperiencecx,cr3f8_salesacceleratoraccess",
+    "selectColumnsNote": "Use the logical name cr3f8_salesacceleratoraccess (lowercase). Schema name cr3f8_SalesAcceleratorAccess is rejected by List rows.",
     "filterRowsFullBackfill": "modifiedon gt 1900-01-01T00:00:00Z",
     "filterRowsIncremental": "modifiedon gt @{addDays(utcNow(), -7)}"
   },
   "expressions": {
     "primaryContactName": "trim(concat(coalesce(outputs('Get_Primary_Contact')?['body/firstname'], ''), ' ', coalesce(outputs('Get_Primary_Contact')?['body/lastname'], '')))",
     "emailPreferContact": "coalesce(outputs('Get_Primary_Contact')?['body/emailaddress1'], items('Apply_to_each')?['emailaddress1'])",
-    "syncedOn": "utcNow()"
+    "syncedOn": "utcNow()",
+    "salesAcceleratorAccessYesNo": "string(items('Apply_to_each')?['cr3f8_salesacceleratoraccess'])"
   },
   "upsertYesBranch": {
     "AccountId": "accountid from current Account",
@@ -46,5 +51,9 @@
     "ModifiedOn": "modifiedon",
     "SyncedOn": "EXPRESSION syncedOn"
   },
-  "verifySql": "SELECT TOP 20 Name, PrimaryContact, Email, SyncedOn FROM dbo.CrmAccounts ORDER BY SyncedOn DESC;"
+  "setSalesAcceleratorAccess": {
+    "AccountId": "accountid from current Account",
+    "SalesAcceleratorAccess": "EXPRESSION salesAcceleratorAccessYesNo"
+  },
+  "verifySql": "SELECT TOP 20 Name, PrimaryContact, Email, SalesAcceleratorAccess, SyncedOn FROM dbo.CrmAccounts ORDER BY SyncedOn DESC;"
 }

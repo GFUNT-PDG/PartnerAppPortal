@@ -31,6 +31,7 @@
 
 @code {
     [Inject] NavigationManager Nav { get; set; } = default!;
+    [Inject] PortalSession Session { get; set; } = default!;
 
     private string Email { get; set; } = string.Empty;
     private string? Message { get; set; }
@@ -57,7 +58,8 @@
         if (email.EndsWith("@partnerdevelopmentgroup.com", StringComparison.OrdinalIgnoreCase) ||
             email.EndsWith("@pdg.com", StringComparison.OrdinalIgnoreCase))
         {
-            Nav.NavigateTo("/dashboard/employee");
+            Session.SetEmployee(email);
+            Nav.NavigateTo($"/dashboard/employee?email={Uri.EscapeDataString(email)}");
             return;
         }
 
@@ -74,7 +76,8 @@
                 return;
             }
 
-            Nav.NavigateTo($"/dashboard/partner?customerId={customer.Id}");
+            Session.SetPartner(email, customer.Id);
+            Nav.NavigateTo($"/dashboard/partner?customerId={customer.Id}&email={Uri.EscapeDataString(email)}");
         }
         catch (Exception ex)
         {

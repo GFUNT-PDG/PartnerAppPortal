@@ -9,13 +9,13 @@
         <h1 class="portal-title">Specialization</h1>
         <p class="portal-subtitle">This specialization page was not found.</p>
         <div class="portal-panel">
-            <a class="btn btn-primary portal-btn" href="@BackHref">Back to Partner Dashboard</a>
+            <a class="btn btn-primary portal-btn" href="@BackHref">Back to Designations Hot List</a>
         </div>
     }
     else
     {
         <h1 class="portal-title">@Item.Title</h1>
-        <p class="portal-subtitle">Advanced Specialization details</p>
+        <p class="portal-subtitle">Designation details</p>
 
         <div class="spec-detail-card">
             <div class="uc-banner">Under construction</div>
@@ -28,7 +28,7 @@
                 <li>Recommended actions — coming soon</li>
                 <li>Reference documentation — coming soon</li>
             </ul>
-            <a class="btn btn-primary portal-btn spec-detail-back" href="@BackHref">Back to Partner Dashboard</a>
+            <a class="btn btn-primary portal-btn spec-detail-back" href="@BackHref">Back to Designations Hot List</a>
         </div>
     }
 </div>
@@ -41,10 +41,7 @@
 
     private SpecializationCatalog.Item? Item { get; set; }
 
-    private string BackHref =>
-        CustomerId is Guid id && id != Guid.Empty
-            ? $"/dashboard/partner?customerId={id}"
-            : "/dashboard/partner";
+    private string BackHref => PartnerNav.Designations(CustomerId);
 
     protected override void OnParametersSet()
     {

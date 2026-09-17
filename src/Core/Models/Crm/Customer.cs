@@ -19,5 +19,7 @@ namespace PartnerAppPortal.Core.Models.Crm
         public string? CustomerExperienceCX { get; set; }
         public string? DevelopmentDirector { get; set; }
 
+        /// <summary>CRM Account field "Sales Accelerator Access" (Yes = true).</summary>
+        public bool SalesAcceleratorAccess { get; set; }
     }
 }

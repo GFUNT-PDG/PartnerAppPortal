@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PartnerAppPortal.Application;
@@ -21,6 +22,13 @@ namespace Api
             // Layered services
             builder.Services.AddApplication();
             builder.Services.AddInfrastructure(builder.Configuration);
+            builder.Services.Configure<PartnerAppPortal.Core.Options.TeamsNotificationOptions>(
+                builder.Configuration.GetSection(PartnerAppPortal.Core.Options.TeamsNotificationOptions.SectionName));
+
+            builder.Services.Configure<FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = 2 * 1024 * 1024;
+            });
 
             // API plumbing
             builder.Services.AddControllers();

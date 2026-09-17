@@ -1,0 +1,74 @@
+@page "/partner/teams"
+@using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Portal.Services
+
+<div class="portal-page partner-portal">
+    <div class="eyebrow">Partner Portal</div>
+    <h1 class="portal-title">Teams Channel</h1>
+
+    @if (_loading)
+    {
+        <p class="portal-subtitle">Loading...</p>
+    }
+    else if (Customer is null)
+    {
+        <p class="portal-subtitle">Partner account could not be resolved.</p>
+        <div class="portal-panel">
+            <a class="btn btn-primary portal-btn" href="/">Return to login</a>
+        </div>
+    }
+    else
+    {
+        <p class="portal-subtitle">Partner Development channel for <strong>@Customer.Name</strong></p>
+        <p class="partner-section-note">
+            <a href="@PartnerNav.AppBoard(Customer.Id)">← Back to App Board</a>
+        </p>
+        <p class="partner-section-note">
+            Embedded chat (history last 30 days) for this account’s assigned Teams channel will appear here.
+            Permissions are granted when the Team is created (Team name = CRM Account Name).
+        </p>
+
+        <div class="teams-chat-placeholder" aria-label="Teams chat placeholder">
+            <div class="teams-chat-placeholder-header">
+                <span>Teams chat</span>
+                <span class="uc-pill">Placeholder</span>
+            </div>
+            <div class="teams-chat-placeholder-body">
+                <div class="uc-banner">Under construction — channel chat embed (30-day history)</div>
+                <p class="teams-chat-placeholder-hint">
+                    Future: Microsoft Graph + Entra External ID, locked to this partner’s channel only.
+                </p>
+            </div>
+            <div class="teams-chat-placeholder-composer">
+                <input type="text" class="form-control" placeholder="Message… (coming soon)" disabled />
+                <button type="button" class="btn btn-primary" disabled>Send</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Inject] IAssessmentApiClient AssessmentApi { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "customerId")]
+    public Guid? CustomerIdFromQuery { get; set; }
+
+    private bool _loading = true;
+    private Customer? Customer { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (CustomerIdFromQuery is Guid id && id != Guid.Empty)
+            {
+                var customers = await AssessmentApi.GetCustomersAsync() ?? new();
+                Customer = customers.FirstOrDefault(c => c.Id == id);
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

@@ -668,6 +668,293 @@ h5 { font-size: 15px; color: var(--gold-deep); }
   font-size: 0.9rem;
 }
 
+/* ---------- Assessment score charts ---------- */
+.score-chart-block {
+  margin: 1.75rem auto 0.5rem;
+  max-width: 760px;
+  text-align: center;
+}
+
+.score-chart-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--char);
+}
+
+.score-chart-frame {
+  background: #fff;
+  border: 1px solid var(--char);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.5rem 0.35rem;
+  box-shadow: var(--shadow);
+}
+
+.score-chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.score-chart-plot {
+  fill: #faf8f2;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.score-chart-grid {
+  stroke: #e5dfd2;
+  stroke-width: 1;
+}
+
+.score-chart-axis-text {
+  fill: var(--muted);
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.score-chart-axis-text.muted {
+  fill: #a39886;
+  font-size: 10px;
+}
+
+.score-chart-axis-title {
+  fill: var(--char-2);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.score-chart-goal {
+  stroke: #2f9e44;
+  stroke-width: 2;
+  stroke-dasharray: 0;
+}
+
+.score-chart-goal-label {
+  fill: #2f9e44;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.score-chart-baseline-line {
+  stroke: #c0392b;
+  stroke-width: 2;
+  fill: none;
+}
+
+.score-chart-baseline-dot {
+  fill: #c0392b;
+  stroke: #fff;
+  stroke-width: 1;
+}
+
+.score-chart-baseline-label {
+  fill: #c0392b;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.score-chart-current-line {
+  stroke: #1b1b1b;
+  stroke-width: 2.5;
+  fill: none;
+}
+
+.score-chart-current-dot {
+  fill: #1b1b1b;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.score-chart-value {
+  fill: var(--char);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.score-chart-tick {
+  fill: #d9d0be;
+}
+
+.score-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem 1.35rem;
+  margin-top: 0.65rem;
+  font-size: 0.85rem;
+  color: var(--char-2);
+}
+
+.score-chart-legend i {
+  display: inline-block;
+  width: 1.1rem;
+  height: 3px;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+  border-radius: 2px;
+}
+
+.score-chart-legend .lg-current { background: #1b1b1b; }
+.score-chart-legend .lg-baseline { background: #c0392b; }
+.score-chart-legend .lg-goal { background: #2f9e44; }
+
+
+/* ---------- Partner App Board ---------- */
+.partner-app-board {
+  max-width: 920px;
+}
+
+.app-board-banner {
+  text-align: center;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--char);
+  letter-spacing: 0.02em;
+  margin: 0.25rem 0 0.65rem;
+}
+
+.app-board-welcome {
+  text-align: center;
+  font-size: 1.15rem;
+  color: var(--char-2);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 0.85rem 1.1rem;
+  margin: 0 auto 1.25rem;
+  max-width: 36rem;
+}
+
+.app-board-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  text-align: left;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 800px) {
+  .app-board-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .app-board-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.app-board-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 118px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.1rem 1.15rem;
+  text-decoration: none !important;
+  color: inherit;
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+  overflow: visible;
+}
+
+.app-board-tile:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(60, 46, 10, .14);
+  color: inherit;
+  text-decoration: none !important;
+}
+
+.app-board-tile-teams {
+  border-color: rgba(98, 100, 167, 0.45);
+  background: linear-gradient(180deg, #f7f7fc, #fff);
+}
+
+.app-board-tile-title {
+  font-weight: 800;
+  color: var(--char);
+  line-height: 1.3;
+  font-size: 1.02rem;
+}
+
+.app-board-tile-cta {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gold-deep);
+  margin-top: auto;
+}
+
+.app-board-tile-badge {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #46478a;
+  background: rgba(98, 100, 167, 0.16);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+}
+
+.app-board-tile:hover .app-board-preview,
+.app-board-tile:focus-visible .app-board-preview {
+  display: block;
+}
+
+.teams-placeholder-panel,
+.teams-chat-placeholder {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.2rem 1.25rem;
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.teams-chat-placeholder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-weight: 800;
+  margin-bottom: 0.85rem;
+}
+
+.teams-chat-placeholder-body {
+  margin-bottom: 1rem;
+}
+
+.teams-chat-placeholder-hint {
+  margin: 0.85rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.teams-chat-placeholder-composer {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.teams-chat-placeholder-composer .form-control {
+  flex: 1;
+}
+
+
 .task-list li { margin: 0.25rem 0; }
 
 .table thead th {
@@ -1096,4 +1383,136 @@ h5 { font-size: 15px; color: var(--gold-deep); }
 
   .wizard-actions { justify-content: stretch; }
   .wizard-actions .btn { flex: 1; }
+}
+
+/* ---------- Employee hub ---------- */
+.employee-hub-modules {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  max-width: 520px;
+  margin: 0 auto 2rem;
+}
+
+.employee-hub-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 4.35rem;
+  padding: 0.95rem 1.25rem;
+  background: var(--panel);
+  color: var(--char) !important;
+  border: 2px solid var(--char);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  font-weight: 700;
+  font-size: 1.02rem;
+  text-align: center;
+  text-decoration: none !important;
+}
+
+.employee-hub-btn:hover,
+.employee-hub-btn:focus-visible {
+  background: var(--panel-2);
+  border-color: var(--gold-deep);
+  color: var(--gold-deep) !important;
+  text-decoration: none !important;
+}
+
+.portal-page-wide {
+  max-width: 1180px;
+  text-align: left;
+}
+
+.portal-page-wide .portal-title,
+.portal-page-wide .portal-subtitle,
+.portal-page-wide .eyebrow {
+  text-align: center;
+}
+
+.saa-page .saa-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem 1.3rem 1.35rem;
+  margin: 0 auto 1.25rem;
+  text-align: left;
+  max-width: 100%;
+}
+
+.saa-copy {
+  color: var(--muted);
+  margin: 0 0 1rem;
+}
+
+.saa-submit {
+  max-width: 320px;
+  margin-left: 0;
+}
+
+.saa-success {
+  color: var(--green-d);
+  font-weight: 700;
+}
+
+.file-drop {
+  position: relative;
+  border: 2px dashed var(--gold);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  min-height: 8.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.file-drop.is-active {
+  border-color: var(--green);
+  background: #f4f8ea;
+}
+
+.file-drop input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-drop-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--gold-deep);
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.file-drop-label span {
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.saa-dupe-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.saa-table {
+  text-align: left;
+  font-size: 0.92rem;
+}
+
+.saa-grid-wrap {
+  overflow-x: auto;
+}
+
+.saa-edit-table input.form-control {
+  min-width: 8.5rem;
+  text-align: left;
 }

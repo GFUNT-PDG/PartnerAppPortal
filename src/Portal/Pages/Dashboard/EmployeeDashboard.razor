@@ -5,10 +5,9 @@
 @using Microsoft.JSInterop
 @inject IJSRuntime JS
 
-<div class="portal-page">
+<div class="portal-page employee-hub">
     <div class="eyebrow">Employee Portal</div>
     <h1 class="portal-title">Employee Dashboard</h1>
-    <p class="portal-subtitle">Select a customer to begin the assessment.</p>
 
     @if (!string.IsNullOrEmpty(LoadError))
     {
@@ -21,7 +20,7 @@
     }
 
     <div class="portal-panel">
-        <label class="portal-label" for="customerSelect">Select Customer</label>
+        <label class="portal-label" for="customerSelect">Assessment Portal</label>
         <select id="customerSelect" class="form-select portal-input" @bind="SelectedCustomerIdValue">
             <option value="">-- Select a customer --</option>
             @foreach (var customer in Customers)
@@ -33,6 +32,11 @@
         <button type="button" class="btn btn-primary portal-btn" @onclick="ConfirmAndContinueAsync">
             Confirm
         </button>
+    </div>
+
+    <div class="employee-hub-modules">
+        <a class="employee-hub-btn" href="/employee/sales-accelerator">Sales Accelerator Account Portal</a>
+        <a class="employee-hub-btn" href="/employee/technical-library">Technical Tools &amp; Library</a>
     </div>
 
     @if (SelectedCustomerId != Guid.Empty)

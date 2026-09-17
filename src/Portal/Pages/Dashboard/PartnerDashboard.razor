@@ -1,15 +1,16 @@
 @page "/dashboard/partner"
-@using PartnerAppPortal.Core.Models.Assessments
 @using PartnerAppPortal.Core.Models.Crm
 @using PartnerAppPortal.Portal.Services
 
-<div class="portal-page partner-portal">
-    <div class="eyebrow">Partner Portal</div>
-    <h1 class="portal-title">Partner Dashboard</h1>
+<div class="portal-page partner-portal partner-app-board">
+    <div class="app-board-banner">Partner Portal</div>
 
     @if (!string.IsNullOrEmpty(LoadError))
     {
         <p class="text-danger">@LoadError</p>
+        <div class="portal-panel">
+            <a class="btn btn-primary portal-btn" href="/">Return to login</a>
+        </div>
     }
     else if (_loading)
     {
@@ -24,186 +25,63 @@
     }
     else
     {
-        <p class="portal-subtitle">Welcome, <strong>@Customer.Name</strong></p>
+        <div class="app-board-welcome">Welcome : <strong>@Customer.Name</strong></div>
+        <p class="partner-section-note">Your apps for this account. Hover a tile for a preview.</p>
 
-        @* ---- Assessment Scores ---- *@
-        <section class="partner-section">
-            <h2 class="portal-section-title">Assessment Scores</h2>
-
-            @if (ProgressCompare is null)
+        <div class="app-board-grid">
+            @foreach (var tile in Tiles)
             {
-                <div class="uc-banner">Under construction — no submitted assessments yet for this account.</div>
-            }
-            else
-            {
-                <div class="score-card hero-score mb-3">
-                    <div class="score-top">
-                        <div class="score-name">Partner score</div>
-                        <div class="score-val">@ProgressCompare.LatestOverall%</div>
-                    </div>
-                    @if (ProgressCompare.HasOnboarding)
+                <a class="app-board-tile @(tile.IsTeams ? "app-board-tile-teams" : "")"
+                   href="@tile.Href"
+                   aria-label="@tile.Title">
+                    <span class="app-board-tile-title">@tile.Title</span>
+                    <span class="app-board-tile-cta">@tile.Cta</span>
+                    @if (tile.IsTeams)
                     {
-                        <p class="score-note mb-0">
-                            Onboarding (@ProgressCompare.InitialDate): <strong>@ProgressCompare.InitialOverall%</strong>
-                            → Current (@ProgressCompare.LatestDate): <strong>@ProgressCompare.LatestOverall%</strong>
-                            <span class="score-delta @DeltaClass(ProgressCompare.OverallDelta)">@FormatDelta(ProgressCompare.OverallDelta)</span>
-                        </p>
+                        <span class="app-board-tile-badge">Chat</span>
                     }
-                </div>
-
-                @if (ProgressCompare.SectionDeltas.Any())
-                {
-                    <div class="section-score-board mb-2">
-                        <table class="section-score-board-table">
-                            <thead>
-                                <tr>
-                                    <th>Section Scores</th>
-                                    <th>Onboarding Assessment Score</th>
-                                    <th>Current Assessment Score</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var s in ProgressCompare.SectionDeltas)
-                                {
-                                    <tr>
-                                        <td class="ssb-name">@s.CategoryName</td>
-                                        <td class="ssb-score">@FormatBoardScore(s.BaselinePercentage, s.PotentialPoints)</td>
-                                        <td class="ssb-score">@FormatBoardScore(s.Percentage, s.PotentialPoints, s.TotalPointsEarned)</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
+                    <span class="hot-list-preview app-board-preview" aria-hidden="true">
+                        <span class="hot-list-preview-chrome">
+                            <span></span><span></span><span></span>
+                        </span>
+                        <span class="hot-list-preview-body">
+                            <span class="hot-list-preview-title">@tile.Title</span>
+                            <span class="hot-list-preview-banner">@tile.PreviewBanner</span>
+                            <span class="hot-list-preview-line"></span>
+                            <span class="hot-list-preview-line short"></span>
+                            <span class="hot-list-preview-line"></span>
+                        </span>
+                    </span>
+                </a>
             }
-        </section>
-
-        @* ---- Designations Hot List ---- *@
-        <section class="partner-section">
-            <h2 class="portal-section-title">Designations Hot List</h2>
-            <p class="partner-section-note">Designations marked Target = Yes on the latest assessment.</p>
-
-            @if (HotList.Count == 0)
-            {
-                <div class="uc-banner">No targeted designations yet. Mark “going to target” as Yes in the assessment to populate this list.</div>
-            }
-            else
-            {
-                <div class="hot-list-grid">
-                    @foreach (var item in HotList)
-                    {
-                        <a class="hot-list-btn"
-                           href="@item.Href"
-                           aria-label="@item.Title details">
-                            <span class="hot-list-title">@item.Title</span>
-                            <span class="hot-list-cta">View details</span>
-                            <span class="hot-list-preview" aria-hidden="true">
-                                <span class="hot-list-preview-chrome">
-                                    <span></span><span></span><span></span>
-                                </span>
-                                <span class="hot-list-preview-body">
-                                    <span class="hot-list-preview-title">@item.Title</span>
-                                    <span class="hot-list-preview-banner">Under construction</span>
-                                    <span class="hot-list-preview-line"></span>
-                                    <span class="hot-list-preview-line short"></span>
-                                    <span class="hot-list-preview-line"></span>
-                                </span>
-                            </span>
-                        </a>
-                    }
-                </div>
-            }
-        </section>
-
-        @* ---- Action Plans ---- *@
-        <section class="partner-section">
-            <h2 class="portal-section-title">Action Plans</h2>
-            <p class="partner-section-note">Automated plans based on assessment results (docs linked from Teams library later).</p>
-
-            <div class="plan-columns">
-                @foreach (var plan in ActionPlanPlaceholders)
-                {
-                    <div class="plan-card">
-                        <div class="plan-card-title">@plan.Title</div>
-                        <p class="plan-card-desc">@plan.Description</p>
-                        <div class="uc-pill">Under construction</div>
-                    </div>
-                }
-            </div>
-        </section>
-
-        @* ---- Tasks Due ---- *@
-        <section class="partner-section">
-            <h2 class="portal-section-title">Tasks Due</h2>
-            <p class="partner-section-note">Open items from action plans, grouped by plan.</p>
-
-            <div class="task-columns">
-                @foreach (var group in TaskPlaceholders)
-                {
-                    <div class="task-group-card">
-                        <div class="task-group-title">@group.PlanName</div>
-                        <ul class="task-list">
-                            @foreach (var task in group.Tasks)
-                            {
-                                <li>@task</li>
-                            }
-                        </ul>
-                        <div class="uc-pill">Under construction</div>
-                    </div>
-                }
-            </div>
-        </section>
+        </div>
     }
 </div>
 
 @code {
-    [Inject] NavigationManager Nav { get; set; } = default!;
     [Inject] IAssessmentApiClient AssessmentApi { get; set; } = default!;
+    [Inject] PortalSession Session { get; set; } = default!;
 
     [SupplyParameterFromQuery(Name = "customerId")]
     public Guid? CustomerIdFromQuery { get; set; }
 
+    [SupplyParameterFromQuery(Name = "email")]
+    public string? EmailFromQuery { get; set; }
+
     private bool _loading = true;
     private string? LoadError { get; set; }
     private Customer? Customer { get; set; }
-    private ProgressCompareModel? ProgressCompare { get; set; }
-    private List<HotListItem> HotList { get; set; } = new();
+    private List<AppTile> Tiles { get; set; } = new();
+    private string? Email { get; set; }
 
-    private sealed class HotListItem
+    private sealed class AppTile
     {
-        public string QuestionId { get; set; } = "";
         public string Title { get; set; } = "";
-        public string Slug { get; set; } = "";
         public string Href { get; set; } = "";
+        public string Cta { get; set; } = "Open";
+        public string PreviewBanner { get; set; } = "Open module";
+        public bool IsTeams { get; set; }
     }
-    private sealed class ProgressCompareModel
-    {
-        public string InitialDate { get; set; } = "";
-        public string LatestDate { get; set; } = "";
-        public decimal InitialOverall { get; set; }
-        public decimal LatestOverall { get; set; }
-        public bool HasOnboarding { get; set; }
-        public decimal OverallDelta => Math.Round(LatestOverall - InitialOverall, 1);
-        public List<CategoryScoreResult> SectionDeltas { get; set; } = new();
-    }
-
-    private sealed record PlanStub(string Title, string Description);
-    private sealed record TaskGroupStub(string PlanName, IReadOnlyList<string> Tasks);
-
-    private static readonly IReadOnlyList<PlanStub> ActionPlanPlaceholders =
-    [
-        new("Solutions Growth Plan", "Focus areas from Solutions & Specializations results. Document links TBD."),
-        new("CSP Maturity Plan", "Customers & CSP follow-ups based on assessment gaps. Document links TBD."),
-        new("Co-Sell Acceleration Plan", "Referral and inbound lead actions. Document links TBD."),
-        new("Marketplace Activation Plan", "Offer and transact readiness actions. Document links TBD."),
-    ];
-
-    private static readonly IReadOnlyList<TaskGroupStub> TaskPlaceholders =
-    [
-        new("Solutions Growth Plan", ["Define designation targets", "Confirm specialization owners", "Schedule follow-up review"]),
-        new("CSP Maturity Plan", ["Validate CSP commitment length", "Review support agreement path"]),
-        new("Co-Sell Acceleration Plan", ["Document referral SOP", "Assign inbound lead owner"]),
-    ];
 
     protected override async Task OnInitializedAsync()
     {
@@ -212,6 +90,10 @@
 
         try
         {
+            Email = EmailFromQuery ?? Session.Email;
+            if (!string.IsNullOrWhiteSpace(Email) && CustomerIdFromQuery is Guid cid)
+                Session.SetPartner(Email, cid);
+
             if (CustomerIdFromQuery is not Guid id || id == Guid.Empty)
             {
                 LoadError = "Missing partner customer. Please sign in again from the home page.";
@@ -226,191 +108,71 @@
                 return;
             }
 
-            var assessments = await AssessmentApi.GetAssessmentsByCustomerAsync(id);
-            ProgressCompare = BuildProgressCompare(assessments);
-            HotList = await BuildHotListAsync(assessments);
+            Tiles =
+            [
+                new AppTile
+                {
+                    Title = "Assessment Portal",
+                    Href = PartnerNav.Assessment(id, Email),
+                    Cta = "View scores",
+                    PreviewBanner = "Assessment results"
+                },
+                new AppTile
+                {
+                    Title = "Designations Hot List",
+                    Href = PartnerNav.Designations(id, Email),
+                    Cta = "View targets",
+                    PreviewBanner = "Target designations"
+                },
+                new AppTile
+                {
+                    Title = "Action Plans",
+                    Href = PartnerNav.ActionPlans(id, Email),
+                    Cta = "View plans",
+                    PreviewBanner = "Under construction"
+                },
+                new AppTile
+                {
+                    Title = "Teams Channel",
+                    Href = PartnerNav.Teams(id, Email),
+                    Cta = "Open chat",
+                    PreviewBanner = "Chat placeholder",
+                    IsTeams = true
+                },
+                new AppTile
+                {
+                    Title = "Partner Progress Tracker",
+                    Href = PartnerNav.Progress(id, Email),
+                    Cta = "View progress",
+                    PreviewBanner = "Roadmaps & tasks"
+                },
+                new AppTile
+                {
+                    Title = "Document Library",
+                    Href = PartnerNav.Documents(id, Email),
+                    Cta = "View files",
+                    PreviewBanner = "Teams Files / Shared"
+                },
+            ];
+
+            if (Customer.SalesAcceleratorAccess)
+            {
+                Tiles.Add(new AppTile
+                {
+                    Title = "Sales Accelerator Account Portal",
+                    Href = PartnerNav.SalesAccelerator(id, Email),
+                    Cta = "Submit leads",
+                    PreviewBanner = "CSV lead intake"
+                });
+            }
         }
         catch (Exception ex)
         {
-            LoadError = $"Could not load partner dashboard: {ex.Message}";
+            LoadError = $"Could not load App Board: {ex.Message}";
         }
         finally
         {
             _loading = false;
         }
     }
-
-    private async Task<List<HotListItem>> BuildHotListAsync(List<AssessmentModel> assessments)
-    {
-        var submitted = assessments
-            .Where(a => a.SubmittedAt != null)
-            .OrderByDescending(a => a.SubmittedAt)
-            .ToList();
-
-        if (submitted.Count == 0)
-            return new();
-
-        var latest = submitted.First();
-        var answers = await AssessmentApi.GetAnswersByAssessmentAsync(latest.Id);
-
-        // Hot list = solution designations with Target = Yes
-        var targetYesIds = answers
-            .Where(a => string.Equals(a.Response, "Yes", StringComparison.OrdinalIgnoreCase)
-                        && SpecializationCatalog.DesignationTargets.Any(t =>
-                            string.Equals(t.QuestionId, a.QuestionId, StringComparison.OrdinalIgnoreCase)))
-            .Select(a => a.QuestionId)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        if (targetYesIds.Count == 0)
-            return new();
-
-        var customerQuery = Customer?.Id is Guid cid && cid != Guid.Empty
-            ? $"?customerId={cid}"
-            : "";
-
-        var items = new List<HotListItem>();
-        foreach (var catalog in SpecializationCatalog.DesignationTargets)
-        {
-            if (!targetYesIds.Contains(catalog.QuestionId))
-                continue;
-
-            items.Add(new HotListItem
-            {
-                QuestionId = catalog.QuestionId,
-                Title = catalog.Title.TrimEnd('?', '.', ' '),
-                Slug = catalog.Slug,
-                Href = SpecializationCatalog.DetailPath(catalog.Slug) + customerQuery
-            });
-        }
-
-        return items;
-    }
-
-    private static ProgressCompareModel? BuildProgressCompare(List<AssessmentModel> list)
-    {
-        var submitted = list
-            .Where(a => a.SubmittedAt != null && a.SectionScores?.Any() == true)
-            .OrderBy(a => a.SubmittedAt)
-            .ToList();
-
-        if (submitted.Count == 0)
-            return null;
-
-        var first = submitted.First();
-        var latest = submitted.Last();
-        var sameRecord = first.Id == latest.Id;
-
-        var orderedNames = latest.SectionScores.Select(s => s.CategoryName).ToList();
-        foreach (var s in first.SectionScores)
-        {
-            if (!orderedNames.Any(n => string.Equals(n, s.CategoryName, StringComparison.OrdinalIgnoreCase)))
-                orderedNames.Add(s.CategoryName);
-        }
-
-        var rows = new List<CategoryScoreResult>();
-        foreach (var name in orderedNames)
-        {
-            var firstSection = first.SectionScores.FirstOrDefault(s =>
-                string.Equals(s.CategoryName, name, StringComparison.OrdinalIgnoreCase));
-            var latestSection = latest.SectionScores.FirstOrDefault(s =>
-                string.Equals(s.CategoryName, name, StringComparison.OrdinalIgnoreCase));
-
-            var max = SectionMaxPoints(name);
-            var earned = latestSection?.TotalPointsEarned ?? 0m;
-            var currentPct = max == 0
-                ? 0
-                : Math.Round((double)earned / (double)max * 100.0, 1);
-
-            // Revised in place: use locked section baselines only — never fall back to current %,
-            // or onboarding mirrors current when SectionScoresJson was saved empty.
-            double? onboardingPct;
-            if (sameRecord)
-            {
-                onboardingPct = firstSection?.BaselinePercentage;
-                if (onboardingPct is null && first.BaselineOverallScore is null)
-                    onboardingPct = firstSection is null
-                        ? null
-                        : (max == 0 ? 0 : Math.Round((double)firstSection.TotalPointsEarned / (double)max * 100.0, 1));
-            }
-            else if (firstSection is not null)
-            {
-                onboardingPct = Math.Round((double)firstSection.TotalPointsEarned / (double)max * 100.0, 1);
-            }
-            else
-            {
-                onboardingPct = null;
-            }
-
-            // Legacy baselines were stored as /100 percentages (== points earned). Re-scale when needed.
-            if (onboardingPct is not null &&
-                firstSection?.PotentialPoints == 100m &&
-                max != 100m)
-            {
-                onboardingPct = Math.Round(onboardingPct.Value / (double)max * 100.0, 1);
-            }
-
-            rows.Add(new CategoryScoreResult
-            {
-                CategoryName = name,
-                BaselinePercentage = onboardingPct,
-                Percentage = currentPct,
-                TotalPointsEarned = earned,
-                PotentialPoints = max
-            });
-        }
-
-        decimal onboardingOverall = sameRecord && first.BaselineOverallScore is not null
-            ? first.BaselineOverallScore.Value
-            : first.TotalScore;
-
-        var currentOverall = rows.Count == 0
-            ? latest.TotalScore
-            : (decimal)Math.Round(rows.Average(r => r.Percentage), 1);
-
-        var onboardRows = rows.Where(r => r.BaselinePercentage is not null).ToList();
-        if (onboardRows.Count > 0)
-            onboardingOverall = (decimal)Math.Round(onboardRows.Average(r => r.BaselinePercentage!.Value), 1);
-
-        return new ProgressCompareModel
-        {
-            InitialDate = first.SubmittedAt?.ToString("MM/dd/yyyy") ?? "Onboarding",
-            LatestDate = latest.SubmittedAt?.ToString("MM/dd/yyyy") ?? "Current",
-            InitialOverall = onboardingOverall,
-            LatestOverall = currentOverall,
-            HasOnboarding = true,
-            SectionDeltas = rows
-        };
-    }
-
-    private static decimal SectionMaxPoints(string categoryName) => categoryName switch
-    {
-        "Solutions and Specializations" => 100m,
-        "Customers & CSP" => 100m,
-        "Co-Sell & Referrals" => 80m,
-        "Marketplace Offers" => 65m,
-        "Incentives Usage" => 50m,
-        _ => 100m
-    };
-
-    private static string FormatBoardScore(double? percentage, decimal potential, decimal? earned = null)
-    {
-        if (percentage is null && earned is null) return "";
-        var max = potential > 0 ? potential : 100m;
-        var pts = earned ?? (percentage is null
-            ? 0m
-            : (decimal)Math.Round(percentage.Value / 100.0 * (double)max, 0));
-        var pct = percentage is null
-            ? Math.Round((double)pts / (double)max * 100.0, 0)
-            : Math.Round(percentage.Value, 0);
-        return $"{pts} / {max} ({pct}%)";
-    }
-
-    private static string FormatDelta(decimal? delta)
-    {
-        if (delta is null) return "—";
-        return delta.Value >= 0 ? $"+{delta.Value}%" : $"{delta.Value}%";
-    }
-
-    private static string DeltaClass(decimal? delta) =>
-        delta is null ? "" : delta >= 0 ? "delta-up" : "delta-down";
 }

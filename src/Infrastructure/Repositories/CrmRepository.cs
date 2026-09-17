@@ -39,7 +39,8 @@ public class CrmRepository : ICrmRepository
                 AccountId = c.Id.ToString(),
                 Name = c.Name,
                 Email = c.Email,
-                PrimaryContact = c.PrimaryContact
+                PrimaryContact = c.PrimaryContact,
+                SalesAcceleratorAccess = c.SalesAcceleratorAccess
             })
             .ToListAsync();
     }
@@ -60,7 +61,8 @@ public class CrmRepository : ICrmRepository
                 AccountId = c.Id.ToString(),
                 Name = c.Name,
                 Email = c.Email,
-                PrimaryContact = c.PrimaryContact
+                PrimaryContact = c.PrimaryContact,
+                SalesAcceleratorAccess = c.SalesAcceleratorAccess
             })
             .ToListAsync();
 

@@ -50,8 +50,8 @@ Recurrence
 
 └── Apply to each (value)
       └── Condition: primary contact present?
-          ├── YES: Get Contact → UpsertCrmAccount (contact email/name)
-          └── NO:  UpsertCrmAccount (account email only)
+          ├── YES: Get Contact → UpsertCrmAccount → SetCrmAccountSalesAcceleratorAccess
+          └── NO:  UpsertCrmAccount → SetCrmAccountSalesAcceleratorAccess
 
 └── Execute stored procedure: SetCrmSyncWatermark
       WatermarkKey = CrmAccounts
@@ -74,11 +74,18 @@ PART C — BUILD STEPS IN POWER AUTOMATE
    WatermarkKey: CrmAccounts
 
 4) List rows (Accounts)
+   Select columns must include CRM Account "Sales Accelerator Access"
+   (logical name cr3f8_salesacceleratoraccess; schema is cr3f8_SalesAcceleratorAccess):
+
+     ...,cr3f8_salesacceleratoraccess
+
    Filter rows — click fx and paste (adjust path after first test if needed):
 
      modifiedon gt @{first(body('GetCrmSyncWatermark')?['resultsets']?['Table1'])?['LastSyncUtc']}
 
 5) Keep your Apply to each + Condition + Upsert mapping from REBUILD-GUIDE.txt
+   After EACH upsert, call [dbo].[SetCrmAccountSalesAcceleratorAccess]
+   (SQL: C:\PartnerAppPortal\src\sql\AddCrmAccountSalesAcceleratorAccess.sql)
 
 6) After the Apply to each (outside the loop), add:
    SQL Server → Execute stored procedure (V2)
@@ -96,6 +103,10 @@ so the first run does a FULL sync (good).
 After that succeeds, watermark becomes "now", and later daily runs only
 get Accounts with modifiedon newer than that.
 
+After adding Sales Accelerator Access to the flow, force one full sync so
+accounts that already have Yes in CRM (but were not recently modified)
+still get the SQL flag:
+
 To force another full sync later:
   UPDATE dbo.CrmSyncWatermark
   SET LastSyncUtc = '1900-01-01T00:00:00'
@@ -108,7 +119,7 @@ PART E — VERIFY
 SELECT * FROM dbo.CrmSyncWatermark;
 
 -- Recent upserts
-SELECT TOP 20 Name, PrimaryContact, Email, SyncedOn
+SELECT TOP 20 Name, PrimaryContact, Email, SalesAcceleratorAccess, SyncedOn
 FROM dbo.CrmAccounts
 ORDER BY SyncedOn DESC;
 
@@ -125,10 +136,14 @@ For ~100 accounts, utcNow() after a successful loop is fine.
 QUICK CHECKLIST
 ---------------
 [ ] Ran CreateCrmSyncWatermark.sql
+[ ] Ran AddCrmAccountSalesAcceleratorAccess.sql
 [ ] Recurrence = Daily
 [ ] GetCrmSyncWatermark at start
+[ ] List rows select includes cr3f8_salesacceleratoraccess
 [ ] List rows filter uses watermark LastSyncUtc
 [ ] Upsert uses Contact email when present
+[ ] SetCrmAccountSalesAcceleratorAccess after each upsert
 [ ] SetCrmSyncWatermark AFTER the loop with utcNow()
 [ ] Removed Initialize variable = 1900
+[ ] After adding the flag, reset watermark once so Yes accounts backfill
 ================================================================================

@@ -1,0 +1,276 @@
+@page "/partner/sales-accelerator"
+@using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Core.Models.SalesAccelerator
+@using PartnerAppPortal.Portal.Services
+@inject IJSRuntime JS
+
+<div class="portal-page partner-portal saa-page">
+    <div class="eyebrow">Partner Portal</div>
+    <h1 class="portal-title">Sales Accelerator Accounts</h1>
+
+    @if (_loading)
+    {
+        <p class="portal-subtitle">Loading...</p>
+    }
+    else if (Customer is null)
+    {
+        <p class="portal-subtitle">Partner account could not be resolved.</p>
+        <div class="portal-panel">
+            <a class="btn btn-primary portal-btn" href="/">Return to login</a>
+        </div>
+    }
+    else if (!Customer.SalesAcceleratorAccess)
+    {
+        <p class="portal-subtitle">Sales Accelerator is not enabled for this partner account.</p>
+        <div class="portal-panel">
+            <a class="btn btn-primary portal-btn" href="@PartnerNav.AppBoard(Customer.Id, Email)">Back to App Board</a>
+        </div>
+    }
+    else
+    {
+        <p class="portal-subtitle">Lead intake for <strong>@Customer.Name</strong></p>
+        <p class="partner-section-note">
+            <a href="@PartnerNav.AppBoard(Customer.Id, Email)">← Back to App Board</a>
+        </p>
+
+        <div class="saa-card">
+            <h2 class="portal-section-title">1. Download template</h2>
+            <p class="saa-copy">
+                Use this CSV for columns A–C only: <strong>Company Name</strong>, <strong>Domain</strong>, and <strong>Account Type</strong>.
+            </p>
+            <button type="button" class="btn btn-outline-primary" @onclick="DownloadTemplateAsync" disabled="@_busy">
+                Download Template
+            </button>
+        </div>
+
+        <div class="saa-card">
+            <h2 class="portal-section-title">2. Upload completed CSV</h2>
+            <p class="saa-copy">Drop the completed template here, then submit. Submitted By, Partner, and Partner Upload Date are filled from this login.</p>
+
+            <div class="file-drop">
+                <InputFile OnChange="OnFileSelected" accept=".csv,text/csv" />
+                <div class="file-drop-label">
+                    @if (!string.IsNullOrEmpty(_fileName))
+                    {
+                        <strong>@_fileName</strong>
+                        <span>(@_fileSizeLabel)</span>
+                    }
+                    else
+                    {
+                        <strong>Drop CSV here</strong>
+                        <span>or click to browse</span>
+                    }
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary portal-btn saa-submit" @onclick="SubmitAsync" disabled="@(_busy || _fileBytes is null)">
+                @(_busy ? "Submitting..." : "Submit")
+            </button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(StatusMessage))
+        {
+            <p class="@(_error ? "text-danger" : "saa-success")">@StatusMessage</p>
+        }
+
+        @if (LastResult is not null)
+        {
+            <div class="saa-card saa-result">
+                <h2 class="portal-section-title">Last submission</h2>
+                <p>Inserted <strong>@LastResult.InsertedCount</strong> account(s). Skipped <strong>@LastResult.DuplicateCount</strong> duplicate domain(s). Invalid rows: <strong>@LastResult.InvalidCount</strong>.</p>
+                @if (LastResult.Duplicates.Count > 0)
+                {
+                    <p class="saa-copy">Duplicate domains were not inserted. Partner Development was notified with the current owning partner.</p>
+                    <ul class="saa-dupe-list">
+                        @foreach (var d in LastResult.Duplicates)
+                        {
+                            <li><strong>@d.Domain</strong> — currently associated to @d.CurrentPartner</li>
+                        }
+                    </ul>
+                }
+                @if (LastResult.InvalidRows.Count > 0)
+                {
+                    <ul class="saa-dupe-list">
+                        @foreach (var row in LastResult.InvalidRows)
+                        {
+                            <li>@row</li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+
+        <div class="saa-card">
+            <h2 class="portal-section-title">Your submissions</h2>
+            @if (Submissions.Count == 0)
+            {
+                <p class="saa-copy">No templates submitted yet.</p>
+            }
+            else
+            {
+                <div class="portal-table-wrap">
+                    <table class="table align-middle saa-table">
+                        <thead>
+                            <tr>
+                                <th>Upload date</th>
+                                <th>File</th>
+                                <th>Inserted</th>
+                                <th>Duplicates skipped</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in Submissions)
+                            {
+                                <tr>
+                                    <td>@s.PartnerUploadDate.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")</td>
+                                    <td>@s.OriginalFileName</td>
+                                    <td>@s.InsertedCount</td>
+                                    <td>@s.DuplicateCount</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Inject] IAssessmentApiClient AssessmentApi { get; set; } = default!;
+    [Inject] ISalesAcceleratorApiClient SalesApi { get; set; } = default!;
+    [Inject] PortalSession Session { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "customerId")]
+    public Guid? CustomerIdFromQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "email")]
+    public string? EmailFromQuery { get; set; }
+
+    private bool _loading = true;
+    private bool _busy;
+    private bool _error;
+    private Customer? Customer { get; set; }
+    private string? Email { get; set; }
+    private string? StatusMessage { get; set; }
+    private string? _fileName;
+    private string? _fileSizeLabel;
+    private byte[]? _fileBytes;
+    private SalesAcceleratorSubmitResult? LastResult { get; set; }
+    private List<SalesAcceleratorSubmissionListItem> Submissions { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Email = EmailFromQuery ?? Session.Email;
+            var customerId = CustomerIdFromQuery ?? Session.CustomerId;
+            if (!string.IsNullOrWhiteSpace(Email) && customerId is Guid cid)
+                Session.SetPartner(Email, cid);
+
+            if (customerId is Guid id && id != Guid.Empty)
+            {
+                var customers = await AssessmentApi.GetCustomersAsync() ?? new();
+                Customer = customers.FirstOrDefault(c => c.Id == id);
+                if (Customer?.SalesAcceleratorAccess == true)
+                    Submissions = await SalesApi.ListSubmissionsAsync(id);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            StatusMessage = $"Could not load Sales Accelerator: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task DownloadTemplateAsync()
+    {
+        try
+        {
+            var bytes = await SalesApi.DownloadTemplateAsync();
+            await JS.InvokeVoidAsync("pacDownloadFile", "SalesAcceleratorAccounts-Template.csv", "text/csv", Convert.ToBase64String(bytes));
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            StatusMessage = $"Could not download template: {ex.Message}";
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        StatusMessage = null;
+        LastResult = null;
+        _error = false;
+        var file = e.File;
+        if (file is null)
+            return;
+
+        _fileName = file.Name;
+        try
+        {
+            await using var stream = file.OpenReadStream(2 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            _fileBytes = ms.ToArray();
+            _fileSizeLabel = $"{_fileBytes.Length:N0} bytes";
+        }
+        catch (Exception ex)
+        {
+            _fileBytes = null;
+            _error = true;
+            StatusMessage = $"Could not read file: {ex.Message}";
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        StatusMessage = null;
+        _error = false;
+
+        if (Customer is null)
+            return;
+        if (!Customer.SalesAcceleratorAccess)
+        {
+            _error = true;
+            StatusMessage = "Sales Accelerator is not enabled for this partner account.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(Email))
+        {
+            _error = true;
+            StatusMessage = "Login email is missing. Return to the home page and sign in again.";
+            return;
+        }
+        if (_fileBytes is null || string.IsNullOrWhiteSpace(_fileName))
+        {
+            _error = true;
+            StatusMessage = "Choose a completed CSV template first.";
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            LastResult = await SalesApi.SubmitCsvAsync(Customer.Id, Email, _fileName, _fileBytes);
+            Submissions = await SalesApi.ListSubmissionsAsync(Customer.Id);
+            StatusMessage = "Submission received.";
+            _fileBytes = null;
+            _fileName = null;
+            _fileSizeLabel = null;
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            StatusMessage = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

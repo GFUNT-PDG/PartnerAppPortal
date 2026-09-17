@@ -11,6 +11,7 @@ public static class DependencyInjection
         services.AddScoped<IAssessmentService, AssessmentService>();
         services.AddScoped<ICrmService, CrmService>();
         services.AddScoped<IScoringEngine, ScoringEngine>();
+        services.AddScoped<ISalesAcceleratorService, SalesAcceleratorService>();
 
         return services;
     }

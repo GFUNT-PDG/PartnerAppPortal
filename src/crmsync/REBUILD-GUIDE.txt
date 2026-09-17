@@ -18,6 +18,8 @@ WHAT THIS FLOW DOES
    - Upsert into SQL dbo.CrmAccounts
 5. Saves new watermark so the next day is incremental
 6. Partner portal login matches CrmAccounts.Email (exact or domain)
+7. Copies CRM "Sales Accelerator Access" (Yes/No) into CrmAccounts.SalesAcceleratorAccess
+   so only Yes partners see the Sales Accelerator tile / app
 
 
 STEP 0 — SQL PREP (do this first)
@@ -28,6 +30,10 @@ STEP 0 — SQL PREP (do this first)
 2. Confirm:
    SELECT * FROM dbo.CrmSyncWatermark;
    -- should show CrmAccounts / 1900-01-01...
+
+3. Run: C:\PartnerAppPortal\src\sql\AddCrmAccountSalesAcceleratorAccess.sql
+   Adds CrmAccounts.SalesAcceleratorAccess (bit, default 0 = No)
+   and dbo.SetCrmAccountSalesAcceleratorAccess (Yes/true/1 → 1, anything else → 0)
 
 
 STEP 1 — DELETE OLD FLOW (optional)
@@ -69,8 +75,13 @@ Add action: Microsoft Dataverse → List rows
 Settings:
   Table name: Accounts
 
-  Select columns:  (paste exactly, one line — adjust cr3f8_* to match your old flow)
-    accountid,name,primarycontactid,emailaddress1,telephone1,modifiedon,cr3f8_accountexecutive,cr3f8_developmentdirector,cr3f8_customerexperiencecx
+  Select columns:  (paste exactly, one line — adjust other cr3f8_* names only if
+  your old flow used different ones)
+
+    accountid,name,primarycontactid,emailaddress1,telephone1,modifiedon,cr3f8_accountexecutive,cr3f8_developmentdirector,cr3f8_customerexperiencecx,cr3f8_salesacceleratoraccess
+
+  Use the lowercase logical name. Schema name cr3f8_SalesAcceleratorAccess
+  will fail List rows.
 
   Filter rows: click fx and use:
 
@@ -133,6 +144,18 @@ B) Add action: SQL Server → Execute stored procedure (V2)
      ModifiedOn           = Modified On
      SyncedOn             = use Expression: utcNow()
 
+C) Add action: SQL Server → Execute stored procedure (V2)
+   Rename to: Set Sales Accelerator Access (With Contact)
+   Procedure: [dbo].[SetCrmAccountSalesAcceleratorAccess]
+   Parameter mappings:
+     AccountId                 = Account (accountid) from List rows item
+     SalesAcceleratorAccess    = use Expression (click fx):
+
+       string(items('Apply_to_each')?['cr3f8_salesacceleratoraccess'])
+
+   That CRM field is a Yes/No two-option. Dataverse sends true/false (sometimes 1/0).
+   The SQL proc treats Yes / true / 1 as granted; anything else is No.
+
 
 STEP 8 — IF NO (no primary contact)
 -----------------------------------
@@ -153,6 +176,10 @@ Add action: SQL Server → Execute stored procedure (V2)
     Phone                = Main Phone
     ModifiedOn           = Modified On
     SyncedOn             = utcNow()
+
+Then add the same SetCrmAccountSalesAcceleratorAccess action as in the YES
+branch (rename it Set Sales Accelerator Access Only). Same AccountId and
+same string(items(...)?['cr3f8_salesacceleratoraccess']) expression.
 
 
 STEP 9 — SET WATERMARK (END OF FLOW — OUTSIDE THE LOOP)
@@ -175,9 +202,11 @@ Recurrence (Daily)
 │       └── Condition: Has Primary Contact
 │           ├── If yes
 │           │   ├── Get Primary Contact
-│           │   └── Upsert Account With Contact
+│           │   ├── Upsert Account With Contact
+│           │   └── Set Sales Accelerator Access (With Contact)
 │           └── If no
-│               └── Upsert Account Only
+│               ├── Upsert Account Only
+│               └── Set Sales Accelerator Access Only
 └── SetCrmSyncWatermark    ← AFTER the loop
 
 
@@ -189,9 +218,16 @@ STEP 11 — SAVE + TEST
 3. Confirm SQL:
 
    SELECT * FROM dbo.CrmSyncWatermark;
-   SELECT TOP 20 Name, PrimaryContact, Email, SyncedOn
+   SELECT TOP 20 Name, PrimaryContact, Email, SalesAcceleratorAccess, SyncedOn
    FROM dbo.CrmAccounts
    ORDER BY SyncedOn DESC;
+
+   After adding the Sales Accelerator field, force a full resync once so Yes
+   accounts that were not recently modified still get the flag:
+
+   UPDATE dbo.CrmSyncWatermark
+   SET LastSyncUtc = '1900-01-01T00:00:00'
+   WHERE WatermarkKey = N'CrmAccounts';
 
 4. Run again the same day → List rows should return few/no accounts
    unless something changed in CRM

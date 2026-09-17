@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PartnerAppPortal.Core.Models.Assessments;
 using PartnerAppPortal.Core.Models.Crm;
+using PartnerAppPortal.Core.Models.SalesAccelerator;
 
 namespace PartnerAppPortal.Infrastructure.Data
 {
@@ -31,6 +32,8 @@ namespace PartnerAppPortal.Infrastructure.Data
         public DbSet<MarketPlaceUsage> MarketplaceUsage { get; set; } = default!;
         public DbSet<IncentivesUsage> IncentivesUsage { get; set; } = default!;
         public DbSet<GrowthMetrics> GrowthMetrics { get; set; } = default!;
+        public DbSet<SalesAcceleratorSubmission> SalesAcceleratorSubmissions { get; set; } = default!;
+        public DbSet<SalesAcceleratorAccount> SalesAcceleratorAccounts { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -80,6 +83,7 @@ modelBuilder.Entity<Customer>(entity =>
     // Present on CrmAccounts — used for partner portal login
     entity.Property(c => c.Email).HasColumnName("Email");
     entity.Property(c => c.PrimaryContact).HasColumnName("PrimaryContact");
+    entity.Property(c => c.SalesAcceleratorAccess).HasColumnName("SalesAcceleratorAccess");
 
     // Not needed for current portal features
     entity.Ignore(c => c.AccountId);
@@ -267,6 +271,46 @@ modelBuilder.Entity<CrmContact>(entity =>
                 entity.Property(x => x.CustomerAdds).HasColumnName("CustomerAdds");
                 entity.Property(x => x.RevenueGrowth).HasColumnName("RevenueGrowth");
                 entity.Property(x => x.PipelineGrowth).HasColumnName("PipelineGrowth");
+            });
+
+            modelBuilder.Entity<SalesAcceleratorSubmission>(entity =>
+            {
+                entity.ToTable("SalesAcceleratorSubmissions");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasColumnName("Id");
+                entity.Property(x => x.PartnerCustomerId).HasColumnName("PartnerCustomerId");
+                entity.Property(x => x.Partner).HasColumnName("Partner").HasMaxLength(256);
+                entity.Property(x => x.SubmittedBy).HasColumnName("SubmittedBy").HasMaxLength(256);
+                entity.Property(x => x.PartnerUploadDate).HasColumnName("PartnerUploadDate");
+                entity.Property(x => x.OriginalFileName).HasColumnName("OriginalFileName").HasMaxLength(260);
+                entity.Property(x => x.ContentType).HasColumnName("ContentType").HasMaxLength(128);
+                entity.Property(x => x.FileContent).HasColumnName("FileContent");
+                entity.Property(x => x.InsertedCount).HasColumnName("InsertedCount");
+                entity.Property(x => x.DuplicateCount).HasColumnName("DuplicateCount");
+            });
+
+            modelBuilder.Entity<SalesAcceleratorAccount>(entity =>
+            {
+                entity.ToTable("SalesAcceleratorAccounts");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasColumnName("Id");
+                entity.Property(x => x.SubmissionId).HasColumnName("SubmissionId");
+                entity.Property(x => x.PartnerCustomerId).HasColumnName("PartnerCustomerId");
+                entity.Property(x => x.CompanyName).HasColumnName("CompanyName").HasMaxLength(256);
+                entity.Property(x => x.Domain).HasColumnName("Domain").HasMaxLength(256);
+                entity.Property(x => x.NormalizedDomain).HasColumnName("NormalizedDomain").HasMaxLength(256);
+                entity.Property(x => x.AccountType).HasColumnName("AccountType").HasMaxLength(128);
+                entity.Property(x => x.SubmittedBy).HasColumnName("SubmittedBy").HasMaxLength(256);
+                entity.Property(x => x.Partner).HasColumnName("Partner").HasMaxLength(256);
+                entity.Property(x => x.PartnerUploadDate).HasColumnName("PartnerUploadDate");
+                entity.Property(x => x.Tpid).HasColumnName("Tpid").HasMaxLength(128);
+                entity.Property(x => x.SentToMitch).HasColumnName("SentToMitch");
+                entity.Property(x => x.DateSubmitted).HasColumnName("DateSubmitted");
+                entity.Property(x => x.DateVerified).HasColumnName("DateVerified");
+                entity.HasIndex(x => x.NormalizedDomain).IsUnique();
+                entity.HasOne<SalesAcceleratorSubmission>()
+                      .WithMany()
+                      .HasForeignKey(x => x.SubmissionId);
             });
         }
     }

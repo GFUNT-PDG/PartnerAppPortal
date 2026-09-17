@@ -1,0 +1,66 @@
+@page "/partner/documents"
+@using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Portal.Services
+
+<div class="portal-page partner-portal">
+    <div class="eyebrow">Partner Portal</div>
+    <h1 class="portal-title">Document Library</h1>
+
+    @if (_loading)
+    {
+        <p class="portal-subtitle">Loading...</p>
+    }
+    else if (Customer is null)
+    {
+        <p class="portal-subtitle">Partner account could not be resolved.</p>
+        <div class="portal-panel">
+            <a class="btn btn-primary portal-btn" href="/">Return to login</a>
+        </div>
+    }
+    else
+    {
+        <p class="portal-subtitle">Shared files for <strong>@Customer.Name</strong></p>
+        <p class="partner-section-note">
+            <a href="@PartnerNav.AppBoard(Customer.Id)">← Back to App Board</a>
+        </p>
+        <p class="partner-section-note">
+            This library will surface the Teams channel <strong>Files / Shared</strong> folder for this account
+            (same Team as the Teams Chat association). Team name matches the CRM account name.
+        </p>
+
+        <div class="teams-placeholder-panel">
+            <div class="uc-banner">Under construction — Teams channel document library placeholder</div>
+            <ul class="spec-detail-list">
+                <li>Channel → Files / Shared folder structure</li>
+                <li>Account-scoped via CRM Account Name ↔ Teams Team</li>
+                <li>Graph / Entra External ID integration TBD</li>
+            </ul>
+        </div>
+    }
+</div>
+
+@code {
+    [Inject] IAssessmentApiClient AssessmentApi { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "customerId")]
+    public Guid? CustomerIdFromQuery { get; set; }
+
+    private bool _loading = true;
+    private Customer? Customer { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (CustomerIdFromQuery is Guid id && id != Guid.Empty)
+            {
+                var customers = await AssessmentApi.GetCustomersAsync() ?? new();
+                Customer = customers.FirstOrDefault(c => c.Id == id);
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

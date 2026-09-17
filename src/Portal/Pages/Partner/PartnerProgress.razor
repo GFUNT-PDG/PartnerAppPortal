@@ -1,0 +1,96 @@
+@page "/partner/progress"
+@using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Portal.Services
+
+<div class="portal-page partner-portal">
+    <div class="eyebrow">Partner Portal</div>
+    <h1 class="portal-title">Partner Progress Tracker</h1>
+
+    @if (_loading)
+    {
+        <p class="portal-subtitle">Loading...</p>
+    }
+    else if (Customer is null)
+    {
+        <p class="portal-subtitle">Partner account could not be resolved.</p>
+        <div class="portal-panel">
+            <a class="btn btn-primary portal-btn" href="/">Return to login</a>
+        </div>
+    }
+    else
+    {
+        <p class="portal-subtitle">Relationship progress for <strong>@Customer.Name</strong></p>
+        <p class="partner-section-note">
+            <a href="@PartnerNav.AppBoard(Customer.Id)">← Back to App Board</a>
+        </p>
+        <p class="partner-section-note">
+            Roadmaps, timelines, tasks due, and achievement status for the overall partner relationship
+            (separate from assessment scores).
+        </p>
+
+        <section class="partner-section">
+            <h2 class="portal-section-title">Roadmap &amp; Timeline</h2>
+            <div class="uc-banner">Under construction — relationship roadmap and milestone timeline will appear here.</div>
+        </section>
+
+        <section class="partner-section">
+            <h2 class="portal-section-title">Tasks Due</h2>
+            <p class="partner-section-note">Open items from action plans, grouped by plan.</p>
+            <div class="task-columns">
+                @foreach (var group in TaskPlaceholders)
+                {
+                    <div class="task-group-card">
+                        <div class="task-group-title">@group.PlanName</div>
+                        <ul class="task-list">
+                            @foreach (var task in group.Tasks)
+                            {
+                                <li>@task</li>
+                            }
+                        </ul>
+                        <div class="uc-pill">Under construction</div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="partner-section">
+            <h2 class="portal-section-title">Achievement Status</h2>
+            <div class="uc-banner">Under construction — designation / program achievement status will appear here.</div>
+        </section>
+    }
+</div>
+
+@code {
+    [Inject] IAssessmentApiClient AssessmentApi { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "customerId")]
+    public Guid? CustomerIdFromQuery { get; set; }
+
+    private bool _loading = true;
+    private Customer? Customer { get; set; }
+
+    private sealed record TaskGroupStub(string PlanName, IReadOnlyList<string> Tasks);
+
+    private static readonly IReadOnlyList<TaskGroupStub> TaskPlaceholders =
+    [
+        new("Solutions Growth Plan", ["Define designation targets", "Confirm specialization owners", "Schedule follow-up review"]),
+        new("CSP Maturity Plan", ["Validate CSP commitment length", "Review support agreement path"]),
+        new("Co-Sell Acceleration Plan", ["Document referral SOP", "Assign inbound lead owner"]),
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (CustomerIdFromQuery is Guid id && id != Guid.Empty)
+            {
+                var customers = await AssessmentApi.GetCustomersAsync() ?? new();
+                Customer = customers.FirstOrDefault(c => c.Id == id);
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

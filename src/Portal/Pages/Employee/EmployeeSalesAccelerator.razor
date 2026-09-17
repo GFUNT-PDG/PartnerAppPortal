@@ -1,0 +1,219 @@
+@page "/employee/sales-accelerator"
+@using PartnerAppPortal.Core.Models.SalesAccelerator
+@inject IJSRuntime JS
+
+<div class="portal-page portal-page-wide saa-page">
+    <div class="eyebrow">Employee Portal</div>
+    <h1 class="portal-title">Sales Accelerator Accounts</h1>
+    <p class="portal-subtitle">Download partner submissions to send to Mitch, then complete TPID and tracking dates.</p>
+    <p class="partner-section-note">
+        <a href="/dashboard/employee">← Back to Employee Dashboard</a>
+    </p>
+
+    @if (!string.IsNullOrEmpty(StatusMessage))
+    {
+        <p class="@(_error ? "text-danger" : "saa-success")">@StatusMessage</p>
+    }
+
+    <div class="saa-card">
+        <h2 class="portal-section-title">Submitted CSV files</h2>
+        @if (_loading)
+        {
+            <p class="saa-copy">Loading...</p>
+        }
+        else if (Submissions.Count == 0)
+        {
+            <p class="saa-copy">No partner templates have been submitted yet.</p>
+        }
+        else
+        {
+            <div class="portal-table-wrap">
+                <table class="table align-middle saa-table">
+                    <thead>
+                        <tr>
+                            <th>Partner</th>
+                            <th>Submitted by</th>
+                            <th>Upload date</th>
+                            <th>File</th>
+                            <th>Inserted</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in Submissions)
+                        {
+                            <tr>
+                                <td>@s.Partner</td>
+                                <td>@s.SubmittedBy</td>
+                                <td>@s.PartnerUploadDate.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")</td>
+                                <td>@s.OriginalFileName</td>
+                                <td>@s.InsertedCount</td>
+                                <td>
+                                    <button type="button" class="btn btn-outline-primary btn-sm"
+                                            disabled="@(DownloadingId == s.Id)"
+                                            @onclick="() => DownloadSubmissionAsync(s)">
+                                        @(DownloadingId == s.Id ? "Downloading..." : "Download CSV")
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="saa-card">
+        <h2 class="portal-section-title">Account records</h2>
+        <p class="saa-copy">Columns A–F come from the partner upload. Update TPID, Sent To Mitch, Date Submitted, and Date Verified, then save.</p>
+
+        @if (Accounts.Count == 0 && !_loading)
+        {
+            <p class="saa-copy">No accounts in the table yet.</p>
+        }
+        else if (Accounts.Count > 0)
+        {
+            <div class="portal-table-wrap saa-grid-wrap">
+                <table class="table align-middle saa-table saa-edit-table">
+                    <thead>
+                        <tr>
+                            <th>Company Name</th>
+                            <th>Domain</th>
+                            <th>Account Type</th>
+                            <th>Submitted By</th>
+                            <th>Partner</th>
+                            <th>Partner Upload Date</th>
+                            <th>TPID</th>
+                            <th>Sent To Mitch</th>
+                            <th>Date Submitted</th>
+                            <th>Date Verified</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Accounts)
+                        {
+                            <tr>
+                                <td>@row.CompanyName</td>
+                                <td>@row.Domain</td>
+                                <td>@(row.AccountType ?? "—")</td>
+                                <td>@row.SubmittedBy</td>
+                                <td>@row.Partner</td>
+                                <td>@row.PartnerUploadDate.ToLocalTime().ToString("MM/dd/yyyy")</td>
+                                <td>
+                                    <input class="form-control" @bind="row.Tpid" @bind:event="oninput" />
+                                </td>
+                                <td>
+                                    <input class="form-control" type="date" value="@DateValue(row.SentToMitch)"
+                                           @onchange="e => row.SentToMitch = ParseDate(e.Value)" />
+                                </td>
+                                <td>
+                                    <input class="form-control" type="date" value="@DateValue(row.DateSubmitted)"
+                                           @onchange="e => row.DateSubmitted = ParseDate(e.Value)" />
+                                </td>
+                                <td>
+                                    <input class="form-control" type="date" value="@DateValue(row.DateVerified)"
+                                           @onchange="e => row.DateVerified = ParseDate(e.Value)" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="button" class="btn btn-primary portal-btn saa-submit" @onclick="SaveAsync" disabled="@_busy">
+                @(_busy ? "Saving..." : "Save settings")
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    [Inject] ISalesAcceleratorApiClient SalesApi { get; set; } = default!;
+
+    private bool _loading = true;
+    private bool _busy;
+    private bool _error;
+    private string? StatusMessage { get; set; }
+    private Guid? DownloadingId { get; set; }
+    private List<SalesAcceleratorSubmissionListItem> Submissions { get; set; } = new();
+    private List<SalesAcceleratorAccount> Accounts { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Submissions = await SalesApi.ListSubmissionsAsync();
+            Accounts = await SalesApi.ListAccountsAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            StatusMessage = $"Could not load Sales Accelerator: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task DownloadSubmissionAsync(SalesAcceleratorSubmissionListItem submission)
+    {
+        StatusMessage = null;
+        _error = false;
+        DownloadingId = submission.Id;
+        try
+        {
+            var file = await SalesApi.DownloadSubmissionFileAsync(submission.Id);
+            await JS.InvokeVoidAsync("pacDownloadFile", file.FileName, file.ContentType, Convert.ToBase64String(file.Content));
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            StatusMessage = $"Download failed: {ex.Message}";
+        }
+        finally
+        {
+            DownloadingId = null;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        StatusMessage = null;
+        _error = false;
+        _busy = true;
+        try
+        {
+            var updates = Accounts.Select(a => new SalesAcceleratorAccountUpdate
+            {
+                Id = a.Id,
+                Tpid = a.Tpid,
+                SentToMitch = a.SentToMitch,
+                DateSubmitted = a.DateSubmitted,
+                DateVerified = a.DateVerified
+            });
+            await SalesApi.SaveAccountFieldsAsync(updates);
+            StatusMessage = "Settings saved.";
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            StatusMessage = $"Save failed: {ex.Message}";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string DateValue(DateTime? value) =>
+        value is DateTime d ? d.ToString("yyyy-MM-dd") : string.Empty;
+
+    private static DateTime? ParseDate(object? value)
+    {
+        var text = value?.ToString();
+        if (string.IsNullOrWhiteSpace(text))
+            return null;
+        return DateTime.TryParse(text, out var parsed) ? parsed.Date : null;
+    }
+}

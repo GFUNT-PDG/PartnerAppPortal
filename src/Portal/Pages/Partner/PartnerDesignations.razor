@@ -1,0 +1,152 @@
+@page "/partner/designations"
+@using PartnerAppPortal.Core.Models.Assessments
+@using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Portal.Services
+
+<div class="portal-page partner-portal">
+    <div class="eyebrow">Partner Portal</div>
+    <h1 class="portal-title">Designations Hot List</h1>
+
+    @if (!string.IsNullOrEmpty(LoadError))
+    {
+        <p class="text-danger">@LoadError</p>
+    }
+    else if (_loading)
+    {
+        <p class="portal-subtitle">Loading designations...</p>
+    }
+    else if (Customer is null)
+    {
+        <p class="portal-subtitle">Partner account could not be resolved.</p>
+        <div class="portal-panel">
+            <a class="btn btn-primary portal-btn" href="/">Return to login</a>
+        </div>
+    }
+    else
+    {
+        <p class="portal-subtitle">Target designations for <strong>@Customer.Name</strong></p>
+        <p class="partner-section-note">
+            <a href="@PartnerNav.AppBoard(Customer.Id)">← Back to App Board</a>
+        </p>
+        <p class="partner-section-note">Designations marked Target = Yes on the latest assessment.</p>
+
+        @if (HotList.Count == 0)
+        {
+            <div class="uc-banner">No targeted designations yet. Mark “going to target” as Yes in the assessment to populate this list.</div>
+        }
+        else
+        {
+            <div class="hot-list-grid">
+                @foreach (var item in HotList)
+                {
+                    <a class="hot-list-btn"
+                       href="@item.Href"
+                       aria-label="@item.Title details">
+                        <span class="hot-list-title">@item.Title</span>
+                        <span class="hot-list-cta">View details</span>
+                        <span class="hot-list-preview" aria-hidden="true">
+                            <span class="hot-list-preview-chrome">
+                                <span></span><span></span><span></span>
+                            </span>
+                            <span class="hot-list-preview-body">
+                                <span class="hot-list-preview-title">@item.Title</span>
+                                <span class="hot-list-preview-banner">Under construction</span>
+                                <span class="hot-list-preview-line"></span>
+                                <span class="hot-list-preview-line short"></span>
+                                <span class="hot-list-preview-line"></span>
+                            </span>
+                        </span>
+                    </a>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Inject] IAssessmentApiClient AssessmentApi { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "customerId")]
+    public Guid? CustomerIdFromQuery { get; set; }
+
+    private bool _loading = true;
+    private string? LoadError { get; set; }
+    private Customer? Customer { get; set; }
+    private List<HotListItem> HotList { get; set; } = new();
+
+    private sealed class HotListItem
+    {
+        public string Title { get; set; } = "";
+        public string Href { get; set; } = "";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        try
+        {
+            if (CustomerIdFromQuery is not Guid id || id == Guid.Empty)
+            {
+                LoadError = "Missing partner customer. Please sign in again from the home page.";
+                return;
+            }
+
+            var customers = await AssessmentApi.GetCustomersAsync() ?? new();
+            Customer = customers.FirstOrDefault(c => c.Id == id);
+            if (Customer is null)
+            {
+                LoadError = "Partner customer was not found.";
+                return;
+            }
+
+            HotList = await BuildHotListAsync(id);
+        }
+        catch (Exception ex)
+        {
+            LoadError = $"Could not load designations: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<List<HotListItem>> BuildHotListAsync(Guid customerId)
+    {
+        var assessments = await AssessmentApi.GetAssessmentsByCustomerAsync(customerId);
+        var submitted = assessments
+            .Where(a => a.SubmittedAt != null)
+            .OrderByDescending(a => a.SubmittedAt)
+            .ToList();
+
+        if (submitted.Count == 0)
+            return new();
+
+        var answers = await AssessmentApi.GetAnswersByAssessmentAsync(submitted.First().Id);
+        var targetYesIds = answers
+            .Where(a => string.Equals(a.Response, "Yes", StringComparison.OrdinalIgnoreCase)
+                        && SpecializationCatalog.DesignationTargets.Any(t =>
+                            string.Equals(t.QuestionId, a.QuestionId, StringComparison.OrdinalIgnoreCase)))
+            .Select(a => a.QuestionId)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (targetYesIds.Count == 0)
+            return new();
+
+        var customerQuery = $"?customerId={customerId}";
+        var items = new List<HotListItem>();
+        foreach (var catalog in SpecializationCatalog.DesignationTargets)
+        {
+            if (!targetYesIds.Contains(catalog.QuestionId))
+                continue;
+
+            items.Add(new HotListItem
+            {
+                Title = catalog.Title.TrimEnd('?', '.', ' '),
+                Href = SpecializationCatalog.DetailPath(catalog.Slug) + customerQuery
+            });
+        }
+
+        return items;
+    }
+}

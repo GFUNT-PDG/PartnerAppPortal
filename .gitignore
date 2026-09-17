@@ -10,6 +10,7 @@
 
 ## Publish outputs (zip these from a fresh `dotnet publish` when deploying)
 **/publish/
+**/publish-azure/
 **/publish-fix/
 **/publish-form/
 **/publishcd/
@@ -28,6 +29,10 @@ secrets.json
 *.log
 Thumbs.db
 Desktop.ini
+
+## Editor / agent
+.cursor/
+**/.cursor/
 
 ## Nested junk sometimes created by repeated publishes
 **/publish-fix/**/publish*/

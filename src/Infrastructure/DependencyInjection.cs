@@ -2,9 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PartnerAppPortal.Core.Interfaces.Repositories;
-using PartnerAppPortal.Infrastructure.Data;
-using PartnerAppPortal.Infrastructure.Repositories;
 using PartnerAppPortal.Core.Interfaces.Services;
+using PartnerAppPortal.Infrastructure.Data;
+using PartnerAppPortal.Infrastructure.Notifications;
+using PartnerAppPortal.Infrastructure.Repositories;
 
 
 namespace PartnerAppPortal.Infrastructure;
@@ -29,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<IAssessmentSubmissionRepository, AssessmentSubmissionRepository>();
         services.AddScoped<ICrmRepository, CrmRepository>();
         services.AddScoped<IAssessmentScoringService, AssessmentScoringService>();
+        services.AddScoped<ISalesAcceleratorRepository, SalesAcceleratorRepository>();
+        services.AddHttpClient<ITeamsNotificationService, TeamsNotificationService>();
 
 
         return services;
