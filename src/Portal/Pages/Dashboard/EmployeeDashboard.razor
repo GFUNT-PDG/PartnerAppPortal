@@ -2,12 +2,16 @@
 @using PartnerAppPortal.Core.Models.Assessments
 @using PartnerAppPortal.Core.Models.Crm
 @using PartnerAppPortal.Portal.Services
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.JSInterop
 @inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthState
+@inject PortalSession Session
 
 <div class="portal-page employee-hub">
-    <div class="eyebrow">Employee Portal</div>
-    <h1 class="portal-title">Employee Dashboard</h1>
+    <h1 class="portal-title">Employee Portal</h1>
+    <div class="app-board-welcome">Welcome : <strong>@EmployeeName</strong></div>
 
     @if (!string.IsNullOrEmpty(LoadError))
     {
@@ -29,14 +33,25 @@
             }
         </select>
 
+        <button type="button" class="btn btn-outline-primary portal-btn" disabled="@Syncing" @onclick="SyncCustomersAsync">
+            @(Syncing ? "Starting sync..." : "Refresh customers from CRM")
+        </button>
+        @if (!string.IsNullOrWhiteSpace(SyncMessage))
+        {
+            <p class="@(SyncFailed ? "text-danger" : "partner-section-note")">@SyncMessage</p>
+        }
+
         <button type="button" class="btn btn-primary portal-btn" @onclick="ConfirmAndContinueAsync">
             Confirm
         </button>
-    </div>
 
-    <div class="employee-hub-modules">
-        <a class="employee-hub-btn" href="/employee/sales-accelerator">Sales Accelerator Account Portal</a>
-        <a class="employee-hub-btn" href="/employee/technical-library">Technical Tools &amp; Library</a>
+        @if (SelectedCustomerId != Guid.Empty)
+        {
+            <a class="btn btn-outline-primary portal-btn"
+               href="@PartnerNav.AppBoard(SelectedCustomerId, Session.Email)">
+                Open partner portal
+            </a>
+        }
     </div>
 
     @if (SelectedCustomerId != Guid.Empty)
@@ -86,6 +101,8 @@
                     </div>
                 }
             }
+
+            <OnboardingChecklist AccountId="SelectedCustomerId" />
 
             <h3 class="portal-section-title">Previous Assessments</h3>
 
@@ -190,7 +207,11 @@
     private List<AssessmentModel>? PreviousAssessments { get; set; }
     private ProgressCompareModel? ProgressCompare { get; set; }
     private Guid? DeletingId { get; set; }
+    private bool Syncing { get; set; }
+    private string? SyncMessage { get; set; }
+    private bool SyncFailed { get; set; }
     private bool _autoOpenedFromQuery;
+    private string EmployeeName { get; set; } = "Employee";
 
     private sealed class ProgressCompareModel
     {
@@ -205,13 +226,23 @@
 
     protected override async Task OnInitializedAsync()
     {
+        EmployeeName = await ResolveEmployeeNameAsync();
+
         try
         {
             Customers = await AssessmentApi.GetCustomersAsync() ?? new();
         }
+        catch (Exception ex) when (ApiTokenHandler.IsConsentChallenge(ex))
+        {
+            Nav.NavigateTo("/MicrosoftIdentity/Account/SignIn", forceLoad: true);
+            return;
+        }
         catch (Exception ex)
         {
-            LoadError = $"Could not load customers: {ex.Message}";
+            var detail = ex.InnerException == null
+                ? ex.Message
+                : $"{ex.Message} ({ex.InnerException.Message})";
+            LoadError = $"Could not load customers: {detail}";
             Customers = new();
         }
 
@@ -223,6 +254,63 @@
             SelectedCustomerIdValue = qid.ToString();
             await ConfirmAndContinueAsync();
         }
+    }
+
+    private async Task SyncCustomersAsync()
+    {
+        if (Syncing)
+            return;
+
+        Syncing = true;
+        SyncMessage = null;
+        SyncFailed = false;
+        try
+        {
+            var started = await AssessmentApi.StartCrmSyncAsync();
+            SyncMessage = started.Message;
+            Customers = await AssessmentApi.GetCustomersAsync() ?? new();
+        }
+        catch (Exception ex) when (ApiTokenHandler.IsConsentChallenge(ex))
+        {
+            Nav.NavigateTo("/MicrosoftIdentity/Account/SignIn", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            SyncFailed = true;
+            SyncMessage = ex.Message;
+        }
+        finally
+        {
+            Syncing = false;
+        }
+    }
+
+    private async Task<string> ResolveEmployeeNameAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var user = state.User;
+        var name = user.FindFirst("name")?.Value
+            ?? user.FindFirst(ClaimTypes.Name)?.Value;
+        if (!string.IsNullOrWhiteSpace(name) && !name.Contains('@'))
+            return name.Trim();
+
+        var given = user.FindFirst(ClaimTypes.GivenName)?.Value
+            ?? user.FindFirst("given_name")?.Value;
+        var family = user.FindFirst(ClaimTypes.Surname)?.Value
+            ?? user.FindFirst("family_name")?.Value;
+        var combined = $"{given} {family}".Trim();
+        if (!string.IsNullOrWhiteSpace(combined))
+            return combined;
+
+        var email = Session.Email
+            ?? user.FindFirst("preferred_username")?.Value
+            ?? user.FindFirst(ClaimTypes.Email)?.Value
+            ?? user.FindFirst(ClaimTypes.Upn)?.Value;
+        if (string.IsNullOrWhiteSpace(email))
+            return "Employee";
+
+        var local = email.Split('@')[0].Replace('.', ' ').Replace('_', ' ');
+        return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(local.ToLowerInvariant());
     }
 
     private async Task ConfirmAndContinueAsync()
@@ -246,6 +334,7 @@
         SelectedCustomerId = customer.Id;
         SelectedCustomerName = customer.Name ?? customer.Id.ToString();
         PreviousAssessments = null;
+        Session.RememberCustomer(customer.Id);
 
         await InvokeAsync(StateHasChanged);
 
@@ -352,7 +441,7 @@
 
         return new ProgressCompareModel
         {
-            InitialDate = first.SubmittedAt?.ToString("MM/dd/yyyy") ?? "Onboarding",
+            InitialDate = submitted.Min(a => a.OnboardingAt ?? a.SubmittedAt)?.ToString("MM/dd/yyyy") ?? "Onboarding",
             LatestDate = latest.SubmittedAt?.ToString("MM/dd/yyyy") ?? "Current",
             InitialOverall = onboardingOverall,
             LatestOverall = currentOverall,

@@ -19,4 +19,12 @@ public sealed class PortalSession
         CustomerId = null;
         IsEmployee = true;
     }
+
+    public void RememberCustomer(Guid customerId)
+    {
+        CustomerId = customerId;
+        Changed?.Invoke();
+    }
+
+    public event Action? Changed;
 }

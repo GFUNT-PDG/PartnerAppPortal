@@ -1,11 +1,22 @@
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Routing
 @namespace PartnerAppPortal.Portal
 
-<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" />
-    </Found>
-    <NotFound>
-        <p>Page not found.</p>
-    </NotFound>
-</Router>
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData">
+                <NotAuthorized>
+                    <div class="landing">
+                        <h1 class="landing-title">The PDG Partner Hub</h1>
+                        <p class="landing-subtitle">Your Microsoft Partner Growth Platform</p>
+                        <a class="btn btn-primary landing-btn" href="MicrosoftIdentity/Account/SignIn">Sign in</a>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeRouteView>
+        </Found>
+        <NotFound>
+            <p>Page not found.</p>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

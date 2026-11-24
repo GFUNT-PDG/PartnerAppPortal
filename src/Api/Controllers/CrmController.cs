@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using PartnerAppPortal.Api.Crm;
 using PartnerAppPortal.Core.Interfaces.Services;
+using PartnerAppPortal.Core.Models.Crm;
 
 namespace PartnerAppPortal.Api.Controllers;
 
@@ -8,10 +10,12 @@ namespace PartnerAppPortal.Api.Controllers;
 public class CrmController : ControllerBase
 {
     private readonly ICrmService _service;
+    private readonly CrmSyncStarter _sync;
 
-    public CrmController(ICrmService service)
+    public CrmController(ICrmService service, CrmSyncStarter sync)
     {
         _service = service;
+        _sync = sync;
     }
 
     [HttpGet("customers")]
@@ -49,6 +53,24 @@ public class CrmController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"FindByEmail failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    [HttpPost("sync")]
+    public async Task<IActionResult> StartSync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var message = await _sync.StartAsync(cancellationToken);
+            return Ok(new CrmSyncStartResult { Message = message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
         }
     }
 }

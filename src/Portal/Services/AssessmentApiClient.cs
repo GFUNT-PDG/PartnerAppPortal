@@ -7,10 +7,18 @@ namespace PartnerAppPortal.Portal.Services
     public class AssessmentApiClient : IAssessmentApiClient
     {
         private readonly HttpClient _http;
+        private readonly ApiUserContext _user;
 
-        public AssessmentApiClient(HttpClient http)
+        public AssessmentApiClient(HttpClient http, ApiUserContext user)
         {
             _http = http;
+            _user = user;
+        }
+
+        private async Task<HttpClient> HttpAsync()
+        {
+            await _user.EnsureAsync();
+            return _http;
         }
 
         private static async Task EnsureSuccessAsync(HttpResponseMessage response, string action)
@@ -24,7 +32,7 @@ namespace PartnerAppPortal.Portal.Services
 
         private async Task<T?> GetJsonOrDefaultAsync<T>(string url)
         {
-            var response = await _http.GetAsync(url);
+            var response = await (await HttpAsync()).GetAsync(url);
             if (!response.IsSuccessStatusCode)
                 return default;
 
@@ -41,14 +49,31 @@ namespace PartnerAppPortal.Portal.Services
 
         public async Task<List<Customer>> GetCustomersAsync()
         {
-            var result = await _http.GetFromJsonAsync<List<Customer>>("api/crm/customers");
+            var response = await (await HttpAsync()).GetAsync("api/crm/customers");
+            if (!response.IsSuccessStatusCode)
+            {
+                var www = response.Headers.WwwAuthenticate.ToString();
+                var body = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(
+                    $"Get customers failed ({(int)response.StatusCode}). {www} {body}".Trim());
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<Customer>>();
             return result ?? new List<Customer>();
+        }
+
+        public async Task<CrmSyncStartResult> StartCrmSyncAsync()
+        {
+            var response = await (await HttpAsync()).PostAsync("api/crm/sync", content: null);
+            await EnsureSuccessAsync(response, "Start CRM sync");
+            return await response.Content.ReadFromJsonAsync<CrmSyncStartResult>()
+                ?? new CrmSyncStartResult { Message = "Sync started." };
         }
 
         public async Task<Customer?> FindCustomerByEmailAsync(string email)
         {
             var encoded = Uri.EscapeDataString(email);
-            var response = await _http.GetAsync($"api/crm/customers/by-email?email={encoded}");
+            var response = await (await HttpAsync()).GetAsync($"api/crm/customers/by-email?email={encoded}");
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 return null;
 
@@ -87,7 +112,7 @@ namespace PartnerAppPortal.Portal.Services
 
         public async Task<AssessmentEntity> GetAssessmentByIdAsync(Guid id)
         {
-            var response = await _http.GetAsync($"api/assessments/{id}");
+            var response = await (await HttpAsync()).GetAsync($"api/assessments/{id}");
             await EnsureSuccessAsync(response, "Get assessment");
             return await response.Content.ReadFromJsonAsync<AssessmentEntity>()
                    ?? new AssessmentEntity();
@@ -114,7 +139,7 @@ namespace PartnerAppPortal.Portal.Services
 
         public async Task SavePartnerInfoAsync(Guid id, PartnerInfo model)
         {
-            var response = await _http.PutAsJsonAsync($"api/assessments/{id}/partner-info", model);
+            var response = await (await HttpAsync()).PutAsJsonAsync($"api/assessments/{id}/partner-info", model);
             await EnsureSuccessAsync(response, "Save partner info");
         }
 
@@ -124,7 +149,7 @@ namespace PartnerAppPortal.Portal.Services
 
         public async Task SaveScoresAsync(Guid id, IEnumerable<AssessmentQuestion> questions)
         {
-            var response = await _http.PostAsJsonAsync($"api/assessments/{id}/scores", questions);
+            var response = await (await HttpAsync()).PostAsJsonAsync($"api/assessments/{id}/scores", questions);
             await EnsureSuccessAsync(response, "Save answers");
         }
 
@@ -133,7 +158,7 @@ namespace PartnerAppPortal.Portal.Services
 
         public async Task SaveCustomersCspAsync(Guid id, CustomersCsp model)
         {
-            var response = await _http.PutAsJsonAsync($"api/assessments/{id}/csp", model);
+            var response = await (await HttpAsync()).PutAsJsonAsync($"api/assessments/{id}/csp", model);
             await EnsureSuccessAsync(response, "Save CSP");
         }
 
@@ -142,7 +167,7 @@ namespace PartnerAppPortal.Portal.Services
 
         public async Task SaveCoSellReferralsAsync(Guid id, CoSellReferrals model)
         {
-            var response = await _http.PutAsJsonAsync($"api/assessments/{id}/co-sell", model);
+            var response = await (await HttpAsync()).PutAsJsonAsync($"api/assessments/{id}/co-sell", model);
             await EnsureSuccessAsync(response, "Save co-sell");
         }
 
@@ -151,7 +176,7 @@ namespace PartnerAppPortal.Portal.Services
 
         public async Task SaveMarketplaceUsageAsync(Guid id, MarketPlaceUsage model)
         {
-            var response = await _http.PutAsJsonAsync($"api/assessments/{id}/marketplace", model);
+            var response = await (await HttpAsync()).PutAsJsonAsync($"api/assessments/{id}/marketplace", model);
             await EnsureSuccessAsync(response, "Save marketplace");
         }
 
@@ -160,7 +185,7 @@ namespace PartnerAppPortal.Portal.Services
 
         public async Task SaveIncentivesUsageAsync(Guid id, IncentivesUsage model)
         {
-            var response = await _http.PutAsJsonAsync($"api/assessments/{id}/incentives", model);
+            var response = await (await HttpAsync()).PutAsJsonAsync($"api/assessments/{id}/incentives", model);
             await EnsureSuccessAsync(response, "Save incentives");
         }
 
@@ -169,25 +194,25 @@ namespace PartnerAppPortal.Portal.Services
 
         public async Task SaveGrowthMetricsAsync(Guid id, GrowthMetrics model)
         {
-            var response = await _http.PutAsJsonAsync($"api/assessments/{id}/growth", model);
+            var response = await (await HttpAsync()).PutAsJsonAsync($"api/assessments/{id}/growth", model);
             await EnsureSuccessAsync(response, "Save growth");
         }
 
         public async Task CreateAssessmentAsync(AssessmentRequest request)
         {
-            var response = await _http.PostAsJsonAsync("api/assessments", request);
+            var response = await (await HttpAsync()).PostAsJsonAsync("api/assessments", request);
             await EnsureSuccessAsync(response, "Create assessment");
         }
 
         public async Task DeleteAssessmentAsync(Guid id)
         {
-            var response = await _http.DeleteAsync($"api/assessments/{id}");
+            var response = await (await HttpAsync()).DeleteAsync($"api/assessments/{id}");
             await EnsureSuccessAsync(response, "Delete assessment");
         }
 
         public async Task<Dictionary<string, List<AssessmentReviewItem>>> GetAssessmentSummaryAsync(Guid id)
         {
-            var response = await _http.GetAsync($"api/assessments/{id}/summary");
+            var response = await (await HttpAsync()).GetAsync($"api/assessments/{id}/summary");
             await EnsureSuccessAsync(response, "Get assessment summary");
             return await response.Content.ReadFromJsonAsync<Dictionary<string, List<AssessmentReviewItem>>>()
                    ?? new Dictionary<string, List<AssessmentReviewItem>>();
@@ -195,7 +220,7 @@ namespace PartnerAppPortal.Portal.Services
 
         public async Task<SubmitResultModel> SubmitAssessmentAsync(Guid id)
         {
-            var response = await _http.PostAsJsonAsync($"api/assessments/{id}/submit", new { });
+            var response = await (await HttpAsync()).PostAsJsonAsync($"api/assessments/{id}/submit", new { });
             await EnsureSuccessAsync(response, "Submit assessment");
             return await response.Content.ReadFromJsonAsync<SubmitResultModel>()
                    ?? new SubmitResultModel();
@@ -203,7 +228,7 @@ namespace PartnerAppPortal.Portal.Services
 
         public async Task<AssessmentFinalResult> GetFinalResultAsync(Guid id)
         {
-            var response = await _http.GetAsync($"api/assessments/{id}/final");
+            var response = await (await HttpAsync()).GetAsync($"api/assessments/{id}/final");
             await EnsureSuccessAsync(response, "Get final result");
             return await response.Content.ReadFromJsonAsync<AssessmentFinalResult>()
                    ?? new AssessmentFinalResult();

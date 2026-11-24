@@ -1,0 +1,20 @@
+@inherits LayoutComponentBase
+
+<div class="page">
+    <HubAppLauncher />
+    <header class="app-topbar">
+        <div class="app-topbar-inner">
+            <div class="brand">
+                <div class="brand-name">The PDG Partner Hub</div>
+                <div class="brand-tag">Your Microsoft Partner Growth Platform</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="partner-shell">
+        <div class="partner-shell-body">
+            @Body
+        </div>
+        <PartnerAppPortal.Portal.Components.Teams.PartnerTeamsChat />
+    </div>
+</div>

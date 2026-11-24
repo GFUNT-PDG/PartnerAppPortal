@@ -1,0 +1,376 @@
+@page "/employee/intro-report"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using PartnerAppPortal.Portal.Services
+@inject AuthenticationStateProvider AuthState
+@inject IntroScoreResultsClient Results
+@inject PortalSession Session
+@inject IJSRuntime JS
+
+<div class="portal-page portal-page-wide">
+    <div class="eyebrow">Employee Portal</div>
+    <h1 class="portal-title">Intro App Report</h1>
+    <p class="partner-section-note">
+        <a href="/dashboard/employee">← Back to Employee Dashboard</a>
+    </p>
+
+    @if (!string.IsNullOrWhiteSpace(_blocked))
+    {
+        <p class="text-danger">@_blocked</p>
+    }
+    else if (_loading)
+    {
+        <p>Loading submissions...</p>
+    }
+    else if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <p class="text-danger">@_error</p>
+    }
+    else if (_rows.Count == 0)
+    {
+        <p>No introductory score submissions yet.</p>
+    }
+    else
+    {
+        <p class="portal-label">
+            <label for="referralFilter">Referral</label>
+            <select id="referralFilter" class="form-select portal-input" style="max-width: 24rem; display: inline-block; margin: 0 0.75rem;"
+                    value="@_referralFilter" @onchange="OnReferralChanged">
+                <option value="">All referrals</option>
+                @foreach (var name in ReferralNames)
+                {
+                    <option value="@name">@name</option>
+                }
+                @if (HasBlankReferral)
+                {
+                    <option value="@BlankReferral">No referral name</option>
+                }
+            </select>
+            <span class="text-muted">@_visible.Count of @_rows.Count</span>
+        </p>
+        <p>
+            <button type="button" class="btn btn-primary portal-btn" disabled="@(_visible.Count == 0)" @onclick="ExportFilteredAsync">
+                Export filtered (@_visible.Count)
+            </button>
+            <button type="button" class="btn btn-outline-primary portal-btn" disabled="@(_selected.Count == 0)" @onclick="ExportSelectedAsync">
+                Export selected (@_selected.Count)
+            </button>
+        </p>
+        <div class="portal-table-wrap">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>
+                            <input type="checkbox"
+                                   title="Select all"
+                                   checked="@AllSelected"
+                                   @onchange="ToggleAll" />
+                        </th>
+                        <th>Submitted</th>
+                        <th>Started</th>
+                        <th>Company</th>
+                        <th>Partner ID</th>
+                        <th>Contact</th>
+                        <th>Signed-in email</th>
+                        <th>Referral</th>
+                        <th>Overall</th>
+                        <th>Categories</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_visible.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="11">No submissions for that referral.</td>
+                        </tr>
+                    }
+                    @foreach (var row in _visible)
+                    {
+                        <tr>
+                            <td>
+                                <input type="checkbox"
+                                       checked="@_selected.Contains(row.Id)"
+                                       @onchange="e => Toggle(row.Id, e.Value is true)" />
+                            </td>
+                            <td>@Format(row.CompletedAt)</td>
+                            <td>@Format(row.CreatedAt)</td>
+                            <td>@(string.IsNullOrWhiteSpace(row.CompanyName) ? "—" : row.CompanyName)</td>
+                            <td>@row.PartnerId</td>
+                            <td>
+                                @row.Email
+                                <div class="text-muted">@row.EmailDomain</div>
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(row.SignedInEmail) ? "—" : row.SignedInEmail)</td>
+                            <td>
+                                @(string.IsNullOrWhiteSpace(row.ReferrerName) ? "—" : row.ReferrerName)
+                                @if (!string.IsNullOrWhiteSpace(row.CspContactEmail))
+                                {
+                                    <div>@row.CspContactEmail</div>
+                                }
+                            </td>
+                            <td>@(row.OverallPercent is null ? "—" : $"{row.OverallPercent:0.0}%")</td>
+                            <td class="section-scores-cell">
+                                @if (row.Sections.Count == 0)
+                                {
+                                    <span class="text-muted">No section scores</span>
+                                }
+                                else
+                                {
+                                    <ul class="section-score-list">
+                                        @foreach (var section in row.Sections)
+                                        {
+                                            <li>
+                                                <span class="section-name">@section.Name</span>
+                                                <span class="section-pts">@section.PointsEarned / @section.MaxPoints (@section.Percent.ToString("0.0")%)</span>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                                @if (row.IsPartial)
+                                {
+                                    <div class="text-muted">Partial Partner Center data</div>
+                                }
+                            </td>
+                            <td>
+                                @row.Status
+                                @if (!string.IsNullOrWhiteSpace(row.SnapshotSource))
+                                {
+                                    <div class="text-muted">@row.SnapshotSource</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(row.TenantId))
+                                {
+                                    <div class="text-muted">Tenant @row.TenantId</div>
+                                }
+                                @if (row.NotificationSentAt is not null)
+                                {
+                                    <div class="text-muted">Emailed @Format(row.NotificationSentAt)</div>
+                                }
+                            </td>
+                        </tr>
+                        @if (row.Answers.Count > 0)
+                        {
+                            <tr>
+                                <td colspan="11">
+                                    <details>
+                                        <summary>Answers (@row.Answers.Count)</summary>
+                                        <ul class="section-score-list">
+                                            @foreach (var answer in row.Answers.OrderBy(a => a.Key))
+                                            {
+                                                <li>
+                                                    <span class="section-name">@answer.Key</span>
+                                                    <span class="section-pts">@(string.IsNullOrWhiteSpace(answer.Value) ? "—" : answer.Value)</span>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </details>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private const string BlankReferral = "(none)";
+
+    private readonly List<IntroResultRow> _rows = [];
+    private readonly HashSet<Guid> _selected = [];
+    private List<IntroResultRow> _visible = [];
+    private bool _loading = true;
+    private string? _error;
+    private string? _blocked;
+    private string _referralFilter = "";
+
+    private bool AllSelected => _visible.Count > 0 && _visible.All(r => _selected.Contains(r.Id));
+
+    private bool HasBlankReferral => _rows.Any(r => string.IsNullOrWhiteSpace(r.ReferrerName));
+
+    private IEnumerable<string> ReferralNames => _rows
+        .Select(r => r.ReferrerName?.Trim())
+        .Where(n => !string.IsNullOrWhiteSpace(n))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var email = Session.Email ?? SiteReportAccess.FindEmail(state.User);
+        if (string.IsNullOrWhiteSpace(email) || !SiteReportAccess.IsEmployee(email))
+        {
+            _blocked = "Intro App Report is available to PDG employees.";
+            _loading = false;
+            return;
+        }
+
+        if (!Results.IsConfigured)
+        {
+            _error = "Intro Score report is not configured. Set IntroScore__BaseUrl and IntroScore__ApiKey on the portal.";
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            _rows.AddRange(await Results.ListAsync());
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string Format(DateTimeOffset? value) =>
+        value?.ToLocalTime().ToString("MM/dd/yyyy h:mm tt") ?? "—";
+
+    private void Toggle(Guid id, bool on)
+    {
+        if (on)
+            _selected.Add(id);
+        else
+            _selected.Remove(id);
+    }
+
+    private void ToggleAll(ChangeEventArgs e)
+    {
+        if (e.Value is true)
+        {
+            foreach (var row in _visible)
+                _selected.Add(row.Id);
+        }
+        else
+        {
+            foreach (var row in _visible)
+                _selected.Remove(row.Id);
+        }
+    }
+
+    private void OnReferralChanged(ChangeEventArgs e)
+    {
+        _referralFilter = e.Value?.ToString() ?? "";
+        _selected.Clear();
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        _visible = string.IsNullOrEmpty(_referralFilter)
+            ? _rows.ToList()
+            : _rows.Where(MatchesReferral).ToList();
+    }
+
+    private bool MatchesReferral(IntroResultRow row)
+    {
+        var name = row.ReferrerName?.Trim();
+        if (_referralFilter == BlankReferral)
+            return string.IsNullOrWhiteSpace(name);
+
+        return string.Equals(name, _referralFilter, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task ExportFilteredAsync() => await DownloadAsync(_visible, _referralFilter);
+
+    private async Task ExportSelectedAsync()
+    {
+        var chosen = _visible.Where(r => _selected.Contains(r.Id)).ToList();
+        await DownloadAsync(chosen, _referralFilter);
+    }
+
+    private async Task DownloadAsync(IReadOnlyList<IntroResultRow> rows, string referral)
+    {
+        if (rows.Count == 0)
+            return;
+
+        var csv = BuildCsv(rows);
+        var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(csv)).ToArray();
+        var who = string.IsNullOrWhiteSpace(referral) || referral == BlankReferral
+            ? "all"
+            : string.Concat(referral.Where(ch => char.IsLetterOrDigit(ch) || ch is '-' or '_')).ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(who))
+            who = "referral";
+        var name = $"intro-app-report-{who}-{DateTime.Now:yyyyMMdd-HHmm}.csv";
+        await JS.InvokeVoidAsync("pacDownloadFile", name, "text/csv;charset=utf-8", Convert.ToBase64String(bytes));
+    }
+
+    private static string BuildCsv(IReadOnlyList<IntroResultRow> rows)
+    {
+        var sectionNames = rows
+            .SelectMany(r => r.Sections)
+            .Select(s => s.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var answerKeys = rows
+            .SelectMany(r => r.Answers.Keys)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var headers = new List<string>
+        {
+            "Submitted", "Started", "Company", "Partner ID", "Contact email", "Email domain",
+            "Signed-in email", "Referrer", "Referrer email", "Overall %", "Status", "Partial",
+            "Source", "Tenant ID", "Result emailed"
+        };
+        headers.AddRange(sectionNames.Select(n => n + " %"));
+        headers.AddRange(sectionNames.Select(n => n + " points"));
+        headers.AddRange(answerKeys);
+
+        var lines = new List<string> { string.Join(",", headers.Select(Csv)) };
+        foreach (var row in rows)
+        {
+            var cells = new List<string>
+            {
+                Csv(Stamp(row.CompletedAt)),
+                Csv(Stamp(row.CreatedAt)),
+                Csv(row.CompanyName),
+                Csv(row.PartnerId),
+                Csv(row.Email),
+                Csv(row.EmailDomain),
+                Csv(row.SignedInEmail),
+                Csv(row.ReferrerName),
+                Csv(row.CspContactEmail),
+                Csv(row.OverallPercent?.ToString("0.0")),
+                Csv(row.Status),
+                Csv(row.IsPartial ? "Yes" : "No"),
+                Csv(row.SnapshotSource),
+                Csv(row.TenantId),
+                Csv(Stamp(row.NotificationSentAt))
+            };
+            foreach (var name in sectionNames)
+            {
+                var section = row.Sections.FirstOrDefault(s =>
+                    string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase));
+                cells.Add(Csv(section?.Percent.ToString("0.0")));
+                cells.Add(Csv(section is null ? null : $"{section.PointsEarned}/{section.MaxPoints}"));
+            }
+            foreach (var key in answerKeys)
+            {
+                row.Answers.TryGetValue(key, out var value);
+                cells.Add(Csv(value));
+            }
+
+            lines.Add(string.Join(",", cells));
+        }
+
+        return string.Join("\r\n", lines);
+    }
+
+    private static string Stamp(DateTimeOffset? value) =>
+        value?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "";
+
+    private static string Csv(string? value)
+    {
+        var text = value ?? "";
+        if (text.Contains('"') || text.Contains(',') || text.Contains('\n') || text.Contains('\r'))
+            return "\"" + text.Replace("\"", "\"\"") + "\"";
+        return text;
+    }
+}

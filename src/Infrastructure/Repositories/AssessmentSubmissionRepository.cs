@@ -22,7 +22,8 @@ namespace PartnerAppPortal.Infrastructure.Repositories
             {
                 Id = Guid.NewGuid(),
                 CustomerId = submission.CustomerId,
-                SubmittedAt = DateTimeOffset.UtcNow
+                SubmittedAt = DateTimeOffset.UtcNow,
+                OnboardingAt = DateTimeOffset.UtcNow
             };
 
             _db.Assessments.Add(assessmentEntity);

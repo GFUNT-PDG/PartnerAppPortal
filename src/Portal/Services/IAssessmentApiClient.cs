@@ -48,6 +48,8 @@ namespace PartnerAppPortal.Portal.Services
         // ⭐ REQUIRED FOR CUSTOMER DROPDOWN
         Task<List<Customer>> GetCustomersAsync();
 
+        Task<CrmSyncStartResult> StartCrmSyncAsync();
+
         /// <summary>Match login email domain to CrmAccounts.Email domain.</summary>
         Task<Customer?> FindCustomerByEmailAsync(string email);
     }

@@ -609,8 +609,15 @@ VALUES ({scoreId}, {assessmentId}, {totalScore})");
                 .FirstAsync(x => x.Id == assessmentId);
 
             var isFirstSubmit = !AssessmentStatus.IsSubmitted(assessment.SubmittedAt);
+            var now = DateTimeOffset.UtcNow;
 
-            assessment.SubmittedAt = DateTimeOffset.UtcNow;
+            // Onboarding date is written once. A later revise only moves SubmittedAt.
+            if (!AssessmentStatus.IsSubmitted(assessment.OnboardingAt))
+            {
+                assessment.OnboardingAt = isFirstSubmit ? now : assessment.SubmittedAt;
+            }
+
+            assessment.SubmittedAt = now;
             await _db.SaveChangesAsync();
 
             if (isFirstSubmit)
@@ -802,6 +809,7 @@ VALUES ({scoreId}, {assessmentId}, {totalScore})");
                     Id = a.Id,
                     CustomerId = customerId,
                     SubmittedAt = AssessmentStatus.Normalize(a.SubmittedAt),
+                    OnboardingAt = AssessmentStatus.Normalize(a.OnboardingAt),
                     Status = AssessmentStatus.IsSubmitted(a.SubmittedAt) ? "Submitted" : "In Progress"
                 })
                 .ToListAsync();

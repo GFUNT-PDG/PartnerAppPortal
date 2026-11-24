@@ -1,0 +1,409 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Identity.Web
+@using Microsoft.JSInterop
+@using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Portal.Services
+@using System.Security.Claims
+@inject IAssessmentApiClient AssessmentApi
+@inject TeamsGraphClient Teams
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthState
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<aside class="teams-dock @(_collapsed ? "teams-dock-collapsed" : null)"
+       style="@(_collapsed ? "flex:0 0 48px;width:48px;min-width:48px;max-width:48px;" : null)">
+    <div class="teams-dock-panel" hidden="@_collapsed">
+        <div class="teams-dock-header">
+            <div>
+                <div class="teams-dock-title">Teams</div>
+                <div class="teams-dock-sub">@Header</div>
+            </div>
+            <button type="button" class="teams-dock-hide" @onclick="HideChat" @onclick:stopPropagation="true">Hide</button>
+        </div>
+
+        @if (_needsConsent && !string.IsNullOrEmpty(_error))
+        {
+            <p class="teams-dock-error">@_error</p>
+            <a class="teams-dock-send"
+               style="display:inline-block;margin:0.75rem;text-align:center;text-decoration:none;"
+               href="@ConnectHref">Connect Teams</a>
+        }
+        else if (_loading)
+        {
+            <p class="teams-dock-note">Loading channel…</p>
+        }
+        else if (!string.IsNullOrEmpty(_fatalError))
+        {
+            <p class="teams-dock-error">@_fatalError</p>
+            <a class="teams-dock-send"
+               style="display:inline-block;margin:0.75rem;text-align:center;text-decoration:none;"
+               href="@ConnectHref">Connect Teams</a>
+        }
+        else
+        {
+            <p class="teams-dock-note" style="margin:0.35rem 0.75rem;">Last 30 days · live with Teams</p>
+            <div class="teams-dock-log" @ref="_log">
+                @if (_lines.Count == 0)
+                {
+                    <p class="teams-dock-note">No channel messages in the last 30 days yet.</p>
+                }
+                @foreach (var line in _lines)
+                {
+                    <article class="teams-dock-msg">
+                        <header>
+                            <strong>@line.Author</strong>
+                            <time>@line.CreatedAt.ToLocalTime().ToString("MMM d, h:mm tt")</time>
+                        </header>
+                        <p>@line.Text</p>
+                    </article>
+                }
+            </div>
+            @if (!string.IsNullOrEmpty(_sendError))
+            {
+                <p class="teams-dock-error" style="margin:0.5rem;">@_sendError</p>
+                <a class="teams-dock-send"
+                   style="display:inline-block;margin:0 0.75rem 0.5rem;text-align:center;text-decoration:none;"
+                   href="@ConnectHref">Reconnect Teams</a>
+            }
+            <div class="teams-dock-compose">
+                <input class="form-control"
+                       @bind="_draft"
+                       @bind:event="oninput"
+                       @onkeydown="OnDraftKeyDown"
+                       placeholder="Message…"
+                       disabled="@_sending" />
+                <button type="button"
+                        class="teams-dock-send"
+                        @onclick="SendAsync"
+                        disabled="@(_sending || string.IsNullOrWhiteSpace(_draft))">
+                    @(_sending ? "Sending…" : "Send")
+                </button>
+            </div>
+        }
+    </div>
+
+    <button type="button" class="teams-dock-tab" hidden="@(!_collapsed)" @onclick="ShowChat" @onclick:stopPropagation="true">Teams</button>
+</aside>
+
+@code {
+    private readonly List<TeamsChatLine> _lines = new();
+    private ElementReference _log;
+    private string? _customerKey;
+    private string? _teamId;
+    private string? _channelId;
+    private string? _historyFingerprint;
+    private string Header { get; set; } = "Channel";
+    private string? _error;
+    private string? _fatalError;
+    private string? _sendError;
+    private string _draft = "";
+    private ClaimsPrincipal? _user;
+    private bool _loading;
+    private bool _sending;
+    private bool _refreshing;
+    private bool _collapsed;
+    private bool _needsConsent;
+    private CancellationTokenSource? _pollCts;
+
+    private string ConnectHref
+    {
+        get
+        {
+            var returnUrl = Nav.ToBaseRelativePath(Nav.Uri);
+            if (string.IsNullOrWhiteSpace(returnUrl))
+                returnUrl = "dashboard/partner";
+            if (!returnUrl.StartsWith('/'))
+                returnUrl = "/" + returnUrl;
+
+            return $"/partner/teams/connect?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadIfNeededAsync();
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadIfNeededAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadIfNeededAsync()
+    {
+        var customerId = ReadCustomerId();
+        var key = customerId?.ToString("D");
+        if (key == _customerKey)
+            return;
+
+        StopPolling();
+        _customerKey = key;
+        _lines.Clear();
+        _historyFingerprint = null;
+        _teamId = null;
+        _channelId = null;
+        _error = null;
+        _fatalError = null;
+        _sendError = null;
+        _needsConsent = false;
+
+        if (customerId is not Guid id)
+        {
+            Header = "Open a partner account";
+            return;
+        }
+
+        _loading = true;
+        try
+        {
+            _user = await SignedInUserAsync();
+            if (_user == null)
+            {
+                _fatalError = "Sign in before opening Teams chat.";
+                return;
+            }
+
+            var customers = await AssessmentApi.GetCustomersAsync() ?? new List<Customer>();
+            var customer = customers.FirstOrDefault(c => c.Id == id);
+            if (customer == null || string.IsNullOrWhiteSpace(customer.Name))
+            {
+                _fatalError = "Partner account could not be resolved.";
+                return;
+            }
+
+            Header = customer.Name;
+            var channel = await Teams.FindAccountChannelAsync(customer.Name, _user);
+            _teamId = channel.TeamId;
+            _channelId = channel.ChannelId;
+            Header = $"{channel.TeamName} / {channel.ChannelName}";
+            await ReplaceHistoryAsync(await Teams.GetRecentMessagesAsync(channel.TeamId, channel.ChannelId, _user));
+            StartPolling();
+        }
+        catch (Exception ex)
+        {
+            StopPolling();
+            if (IsConsentChallenge(ex))
+            {
+                _needsConsent = true;
+                _error = "Teams needs permission for this sign-in. Click Connect Teams to approve, then return here. "
+                    + Detail(ex);
+            }
+            else
+            {
+                _fatalError = Detail(ex);
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void StartPolling()
+    {
+        StopPolling();
+        if (_teamId == null || _channelId == null)
+            return;
+
+        _pollCts = new CancellationTokenSource();
+        _ = PollLoopAsync(_pollCts.Token);
+    }
+
+    private void StopPolling()
+    {
+        try
+        {
+            _pollCts?.Cancel();
+            _pollCts?.Dispose();
+        }
+        catch
+        {
+        }
+
+        _pollCts = null;
+    }
+
+    private async Task PollLoopAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(4));
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                await InvokeAsync(RefreshHistoryAsync);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private async Task RefreshHistoryAsync()
+    {
+        if (_collapsed || _loading || _sending || _refreshing)
+            return;
+        if (_teamId == null || _channelId == null || _user == null)
+            return;
+        if (_needsConsent || !string.IsNullOrEmpty(_fatalError))
+            return;
+
+        _refreshing = true;
+        try
+        {
+            var latest = await Teams.GetRecentMessagesAsync(_teamId, _channelId, _user);
+            await ReplaceHistoryAsync(latest);
+        }
+        catch
+        {
+            // Keep the dock usable if a background refresh fails.
+        }
+        finally
+        {
+            _refreshing = false;
+        }
+    }
+
+    private async Task ReplaceHistoryAsync(IReadOnlyList<TeamsChatLine> latest)
+    {
+        var fingerprint = string.Join('\n', latest.Select(l => l.Id + ":" + l.Text.Length));
+        if (fingerprint == _historyFingerprint)
+            return;
+
+        _historyFingerprint = fingerprint;
+        _lines.Clear();
+        _lines.AddRange(latest);
+        await ScrollToBottomAsync();
+    }
+
+    private async Task ScrollToBottomAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("pacScrollTeamsLog", _log);
+        }
+        catch (JSException)
+        {
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    private async Task OnDraftKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await SendAsync();
+    }
+
+    private async Task SendAsync()
+    {
+        if (_sending || string.IsNullOrWhiteSpace(_draft) || _teamId == null || _channelId == null)
+            return;
+
+        _sending = true;
+        _sendError = null;
+        var text = _draft.Trim();
+        try
+        {
+            _user ??= await SignedInUserAsync();
+            if (_user == null)
+            {
+                _sendError = "Sign in before opening Teams chat.";
+                return;
+            }
+
+            var line = await Teams.SendAsync(_teamId, _channelId, text, _user);
+            if (_lines.All(l => l.Id != line.Id))
+                _lines.Add(line);
+            _draft = "";
+            _historyFingerprint = null;
+            await ScrollToBottomAsync();
+        }
+        catch (Exception ex)
+        {
+            if (IsConsentChallenge(ex) || LooksLikeMissingSendScope(ex))
+            {
+                _sendError = "Sending needs Teams permission. Click Reconnect Teams, approve ChannelMessage.Send, then try again. "
+                    + Detail(ex);
+            }
+            else
+            {
+                _sendError = Detail(ex);
+            }
+        }
+        finally
+        {
+            _sending = false;
+        }
+    }
+
+    private static bool LooksLikeMissingSendScope(Exception ex)
+    {
+        var text = Detail(ex);
+        return text.Contains("Forbidden", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Authorization_RequestDenied", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("ChannelMessage.Send", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Insufficient privileges", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string Detail(Exception ex)
+    {
+        var inner = ex;
+        while (inner.InnerException != null)
+            inner = inner.InnerException;
+        return inner.Message;
+    }
+
+    private static bool IsConsentChallenge(Exception ex) =>
+        ex is MicrosoftIdentityWebChallengeUserException
+        || ex.InnerException is MicrosoftIdentityWebChallengeUserException
+        || ex.Message.Contains("MsalUiRequiredException", StringComparison.OrdinalIgnoreCase)
+        || (ex.InnerException?.Message.Contains("MsalUiRequiredException", StringComparison.OrdinalIgnoreCase) ?? false);
+
+    private async Task<ClaimsPrincipal?> SignedInUserAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        return state.User.Identity?.IsAuthenticated == true ? state.User : null;
+    }
+
+    private Guid? ReadCustomerId()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("customerId", out var value) && Guid.TryParse(value.FirstOrDefault(), out var id))
+            return id;
+        return null;
+    }
+
+    private async Task HideChat()
+    {
+        _collapsed = true;
+        await Task.CompletedTask;
+    }
+
+    private async Task ShowChat()
+    {
+        _collapsed = false;
+        await RefreshHistoryAsync();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+        StopPolling();
+        return ValueTask.CompletedTask;
+    }
+}

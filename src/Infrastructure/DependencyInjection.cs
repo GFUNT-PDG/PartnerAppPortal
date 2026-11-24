@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<ICrmRepository, CrmRepository>();
         services.AddScoped<IAssessmentScoringService, AssessmentScoringService>();
         services.AddScoped<ISalesAcceleratorRepository, SalesAcceleratorRepository>();
+        services.AddScoped<IPartnerOnboardingRepository, PartnerOnboardingRepository>();
         services.AddHttpClient<ITeamsNotificationService, TeamsNotificationService>();
 
 

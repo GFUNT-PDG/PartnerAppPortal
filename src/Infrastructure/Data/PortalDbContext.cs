@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PartnerAppPortal.Core.Models.Assessments;
 using PartnerAppPortal.Core.Models.Crm;
+using PartnerAppPortal.Core.Models.Onboarding;
 using PartnerAppPortal.Core.Models.SalesAccelerator;
 
 namespace PartnerAppPortal.Infrastructure.Data
@@ -34,6 +35,7 @@ namespace PartnerAppPortal.Infrastructure.Data
         public DbSet<GrowthMetrics> GrowthMetrics { get; set; } = default!;
         public DbSet<SalesAcceleratorSubmission> SalesAcceleratorSubmissions { get; set; } = default!;
         public DbSet<SalesAcceleratorAccount> SalesAcceleratorAccounts { get; set; } = default!;
+        public DbSet<PartnerOnboardingRecord> PartnerOnboarding { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -123,6 +125,7 @@ modelBuilder.Entity<CrmContact>(entity =>
                 entity.Property(a => a.Id).HasColumnName("Id");
                 entity.Property(a => a.CustomerId).HasColumnName("CustomerId");
                 entity.Property(a => a.SubmittedAt).HasColumnName("SubmittedAt");
+                entity.Property(a => a.OnboardingAt).HasColumnName("OnboardingAt");
 
                 // Not present on Azure Assessments table
                 entity.Ignore(a => a.AnswersJson);
@@ -311,6 +314,19 @@ modelBuilder.Entity<CrmContact>(entity =>
                 entity.HasOne<SalesAcceleratorSubmission>()
                       .WithMany()
                       .HasForeignKey(x => x.SubmissionId);
+            });
+
+            modelBuilder.Entity<PartnerOnboardingRecord>(entity =>
+            {
+                entity.ToTable("PartnerOnboarding");
+                entity.HasKey(x => x.AccountId);
+                entity.Property(x => x.AccountId).HasColumnName("AccountId");
+                entity.Property(x => x.ProfileJson).HasColumnName("ProfileJson");
+                entity.Property(x => x.ChecklistJson).HasColumnName("ChecklistJson");
+                entity.Property(x => x.FolderCreated).HasColumnName("FolderCreated");
+                entity.Property(x => x.ContactCardBlob).HasColumnName("ContactCardBlob").HasMaxLength(512);
+                entity.Property(x => x.UpdatedOn).HasColumnName("UpdatedOn");
+                entity.Property(x => x.UpdatedBy).HasColumnName("UpdatedBy").HasMaxLength(256);
             });
         }
     }

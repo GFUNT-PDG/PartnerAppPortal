@@ -1,0 +1,207 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Identity.Web
+@using Microsoft.JSInterop
+@using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Portal.Services
+@inject AuthenticationStateProvider AuthState
+@inject TeamsGraphClient Teams
+@inject SiteReportFiles Files
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@if (_loading)
+{
+    <p class="partner-section-note">Loading document...</p>
+}
+else if (_needsConsent)
+{
+    <div class="uc-banner">@_error</div>
+    <p class="partner-section-note">
+        <a class="btn btn-primary portal-btn" href="@ConnectHref">Connect Teams files</a>
+    </p>
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div class="uc-banner">@_error</div>
+}
+else
+{
+    <div class="site-doc-actions">
+        @if (_pdfBytes is not null)
+        {
+            <button type="button" class="btn btn-outline-primary btn-sm" @onclick="OpenPdfAsync">Open PDF</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="DownloadPdfAsync">Download PDF</button>
+        }
+        @if (_pptxHref is not null)
+        {
+            <a class="btn btn-outline-secondary btn-sm" href="@_pptxHref">Download PowerPoint</a>
+        }
+    </div>
+
+    @if (_pdfBytes is not null)
+    {
+        <iframe id="@_frameId"
+                class="site-report-frame"
+                title="@Title"></iframe>
+    }
+}
+
+@code {
+    [Parameter] public Customer Customer { get; set; } = default!;
+    [Parameter] public string PdfReportKey { get; set; } = "";
+    [Parameter] public string PptxReportKey { get; set; } = "";
+    [Parameter] public string Title { get; set; } = "Document";
+    [Parameter] public string NotPublishedMessage { get; set; } = "This document has not been published for this account yet.";
+
+    private bool _loading = true;
+    private bool _needsConsent;
+    private string? _error;
+    private byte[]? _pdfBytes;
+    private string? _pdfFileName;
+    private string? _pptxHref;
+    private string? _shownKey;
+    private readonly string _frameId = "site-pdf-" + Guid.NewGuid().ToString("N");
+
+    private string ConnectHref
+    {
+        get
+        {
+            var returnUrl = Nav.ToBaseRelativePath(Nav.Uri);
+            if (string.IsNullOrWhiteSpace(returnUrl))
+                returnUrl = "/dashboard/partner";
+            if (!returnUrl.StartsWith('/'))
+                returnUrl = "/" + returnUrl;
+            return $"/partner/teams/connect?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        _needsConsent = false;
+        _pdfBytes = null;
+        _pdfFileName = null;
+        _pptxHref = null;
+        _shownKey = null;
+
+        try
+        {
+            if (Customer is null || string.IsNullOrWhiteSpace(Customer.Name) || Customer.Id == Guid.Empty)
+            {
+                _error = "Partner account could not be resolved.";
+                return;
+            }
+
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            TeamsFileBytes? pdf = null;
+            TeamsDriveItem? pptx = null;
+
+            if (!string.IsNullOrWhiteSpace(PdfReportKey))
+            {
+                pdf = await Teams.DownloadAccountFileByPathAsync(
+                    Customer.Name,
+                    Files.RelativePathFor(PdfReportKey, Customer.Name),
+                    auth.User);
+            }
+
+            if (!string.IsNullOrWhiteSpace(PptxReportKey))
+            {
+                pptx = await Teams.FindAccountFileByPathAsync(
+                    Customer.Name,
+                    Files.RelativePathFor(PptxReportKey, Customer.Name),
+                    auth.User);
+            }
+
+            if (pdf is null && pptx is null)
+            {
+                _error = NotPublishedMessage;
+                return;
+            }
+
+            if (pdf is not null && pdf.Bytes.Length > 0)
+            {
+                _pdfFileName = pdf.FileName;
+                _pdfBytes = pdf.Bytes;
+            }
+
+            if (pptx is not null)
+                _pptxHref = Files.FileHref(Customer.Id, PptxReportKey, Customer.Name, download: true);
+        }
+        catch (Exception ex)
+        {
+            if (IsConsentChallenge(ex))
+            {
+                _needsConsent = true;
+                _error = "Teams file access needs permission for this sign-in. Click Connect Teams files to approve, then return here.";
+            }
+            else
+            {
+                _error = "This document could not be opened. " + Detail(ex);
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pdfBytes is null || _pdfBytes.Length == 0)
+            return;
+
+        var key = $"{_frameId}:{_pdfFileName}:{_pdfBytes.Length}";
+        if (_shownKey == key)
+            return;
+
+        try
+        {
+            await JS.InvokeVoidAsync(
+                "pacShowPdfInFrame",
+                _frameId,
+                Convert.ToBase64String(_pdfBytes));
+            _shownKey = key;
+        }
+        catch (JSException)
+        {
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    private async Task OpenPdfAsync()
+    {
+        if (_pdfBytes is null)
+            return;
+
+        await JS.InvokeVoidAsync("pacOpenPdfTab", Convert.ToBase64String(_pdfBytes));
+    }
+
+    private async Task DownloadPdfAsync()
+    {
+        if (_pdfBytes is null)
+            return;
+
+        await JS.InvokeVoidAsync(
+            "pacDownloadFile",
+            _pdfFileName ?? "document.pdf",
+            "application/pdf",
+            Convert.ToBase64String(_pdfBytes));
+    }
+
+    private static string Detail(Exception ex)
+    {
+        var inner = ex;
+        while (inner.InnerException != null)
+            inner = inner.InnerException;
+        return inner.Message;
+    }
+
+    private static bool IsConsentChallenge(Exception ex) =>
+        ex is MicrosoftIdentityWebChallengeUserException
+        || ex.InnerException is MicrosoftIdentityWebChallengeUserException
+        || ex.Message.Contains("MsalUiRequiredException", StringComparison.OrdinalIgnoreCase)
+        || (ex.InnerException?.Message.Contains("MsalUiRequiredException", StringComparison.OrdinalIgnoreCase) ?? false);
+}

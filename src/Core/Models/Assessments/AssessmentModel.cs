@@ -5,6 +5,9 @@ namespace PartnerAppPortal.Core.Models.Assessments
         public Guid Id { get; set; }
         public DateTime? SubmittedAt { get; set; }
 
+        /// <summary>Original onboarding date. Stays put when the assessment is revised.</summary>
+        public DateTime? OnboardingAt { get; set; }
+
         public Guid CustomerId { get; set; }
         public string? CustomerName { get; set; }
 

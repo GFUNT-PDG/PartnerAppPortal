@@ -1,0 +1,59 @@
+@page "/partner/sales-one-pager"
+@using Microsoft.AspNetCore.Components.Authorization
+@using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Portal.Components.SiteReports
+@using PartnerAppPortal.Portal.Services
+
+<div class="portal-page partner-portal progress-page">
+    <div class="eyebrow">Partner Portal</div>
+    <h1 class="portal-title">Sales One Pager</h1>
+
+    @if (_loading)
+    {
+        <p class="portal-subtitle">Loading...</p>
+    }
+    else if (Customer is null)
+    {
+        <p class="portal-subtitle">Partner account could not be resolved.</p>
+        <div class="portal-panel">
+            <a class="btn btn-primary portal-btn" href="/">Return to login</a>
+        </div>
+    }
+    else
+    {
+        <p class="portal-subtitle">Partner Pitch for <strong>@Customer.Name</strong></p>
+        <p class="partner-section-note">
+            <a href="@PartnerNav.AppBoard(Customer.Id)">← Back to App Board</a>
+        </p>
+
+        <PartnerSiteDocumentFrame Customer="Customer"
+                                  PdfReportKey="@SiteReportFiles.SalesOverviewPdf"
+                                  PptxReportKey="@SiteReportFiles.SalesOverviewPptx"
+                                  Title="Partner Pitch"
+                                  NotPublishedMessage="The Partner Pitch has not been published for this account yet." />
+    }
+</div>
+
+@code {
+    [Inject] SiteReportAccess Access { get; set; } = default!;
+    [Inject] AuthenticationStateProvider AuthState { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "customerId")]
+    public Guid? CustomerIdFromQuery { get; set; }
+
+    private bool _loading = true;
+    private Customer? Customer { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            Customer = await Access.ResolveAsync(auth.User, CustomerIdFromQuery);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

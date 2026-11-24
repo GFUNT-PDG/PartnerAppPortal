@@ -1,0 +1,325 @@
+@page "/employee/onboarding"
+@using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Core.Models.Onboarding
+@using PartnerAppPortal.Portal.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IAssessmentApiClient AssessmentApi
+@inject IOnboardingApiClient OnboardingApi
+@inject PortalSession Session
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Nav
+
+<div class="portal-page portal-page-wide">
+    <div class="eyebrow">Employee Portal</div>
+    <h1 class="portal-title">New Partner Onboarding App</h1>
+    <p class="partner-section-note">
+        <a href="/dashboard/employee">← Back to Employee Dashboard</a>
+    </p>
+
+    @if (!EmployeeAllowed)
+    {
+        <p class="text-danger">This app is available to PDG employees.</p>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(Status))
+        {
+            <p class="@(StatusIsError ? "text-danger" : "partner-section-note")">@Status</p>
+        }
+
+        <div class="portal-panel">
+            <label class="portal-label" for="onboardingCustomer">Partner account</label>
+            <select id="onboardingCustomer" class="form-select portal-input" @bind="SelectedCustomerIdValue" @bind:after="LoadAsync">
+                <option value="">-- Select a customer --</option>
+                @foreach (var customer in Customers)
+                {
+                    <option value="@customer.Id.ToString()">@customer.Name</option>
+                }
+            </select>
+        </div>
+
+        @if (AccountId != Guid.Empty)
+        {
+            <p class="partner-section-note">
+                Company name comes from the customer list. After you select a partner, the other fields load from Dynamics and save back to that account.
+                A section with several entries, such as Customer Industry, is complete when at least one is filled. Every other field needs an answer before All Dynamics Details is complete.
+            </p>
+            <p class="partner-section-note">
+                @(OnboardingCatalog.DynamicsDetailsComplete(Fields)
+                    ? "All Dynamics Details: complete."
+                    : "All Dynamics Details: still open.")
+            </p>
+            @if (UnmappedLabels.Count > 0)
+            {
+                <p class="partner-section-note">
+                    No Dynamics column matched: @string.Join(", ", UnmappedLabels).
+                </p>
+            }
+
+            @foreach (var section in OnboardingCatalog.Sections)
+            {
+                <section class="portal-panel onboarding-section">
+                    <h2 class="portal-section-title">@section.Title</h2>
+                    @if (section.Fields.Any(field => field.Repeating))
+                    {
+                        <p class="partner-section-note">At least one entry in this section is required.</p>
+                    }
+                    @foreach (var field in section.Fields)
+                    {
+                        <label class="portal-label" for="@field.Key">@field.Label</label>
+                        @if (field.Kind is OnboardingKind.YesNo or OnboardingKind.Dropdown)
+                        {
+                            <select id="@field.Key" class="form-select portal-input" @bind="Fields[field.Key]">
+                                @foreach (var choice in ChoicesFor(field))
+                                {
+                                    <option value="@choice">@(string.IsNullOrEmpty(choice) ? "—" : choice)</option>
+                                }
+                            </select>
+                        }
+                        else if (field.Kind is OnboardingKind.MultiSelect && ChoiceLabels(field).Count == 0)
+                        {
+                            <input id="@field.Key" class="form-control portal-input" @bind="Fields[field.Key]" />
+                        }
+                        else if (field.Kind is OnboardingKind.MultiSelect)
+                        {
+                            <div id="@field.Key" class="onboarding-choices">
+                                @foreach (var choice in ChoiceLabels(field))
+                                {
+                                    <label class="onboarding-choice">
+                                        <input type="checkbox" checked="@IsChosen(field.Key, choice)" @onchange="args => ToggleChoice(field.Key, choice, args)" />
+                                        @choice
+                                    </label>
+                                }
+                            </div>
+                        }
+                        else if (field.Kind is OnboardingKind.Date)
+                        {
+                            <input id="@field.Key" type="date" class="form-control portal-input" value="@Fields[field.Key]" @onchange="e => Fields[field.Key] = AsDateText(e.Value)" />
+                        }
+                        else if (field.Kind is OnboardingKind.Number)
+                        {
+                            <input id="@field.Key" type="number" step="1" class="form-control portal-input" value="@Fields[field.Key]" @onchange="e => Fields[field.Key] = e.Value?.ToString()" />
+                        }
+                        else
+                        {
+                            <input id="@field.Key" class="form-control portal-input" @bind="Fields[field.Key]" />
+                        }
+                    }
+                </section>
+            }
+
+            <div class="wizard-actions">
+                <button type="button" class="btn btn-primary portal-btn" disabled="@Busy" @onclick="SaveAsync">
+                    @(Busy ? "Saving..." : "Save account information")
+                </button>
+                <button type="button" class="btn btn-outline-primary portal-btn" disabled="@Busy" @onclick="CreateFolderAsync">
+                    @(Busy ? "Working..." : "Create customer folder")
+                </button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(ContactCardBlob))
+            {
+                <p class="partner-section-note">Customer folder file: @ContactCardBlob</p>
+            }
+        }
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "customerId")]
+    public Guid? CustomerIdFromQuery { get; set; }
+
+    private bool EmployeeAllowed { get; set; }
+    private bool Busy { get; set; }
+    private bool StatusIsError { get; set; }
+    private string? Status { get; set; }
+    private string? ContactCardBlob { get; set; }
+    private List<Customer> Customers { get; set; } = new();
+    private string SelectedCustomerIdValue { get; set; } = "";
+    private Dictionary<string, string?> Fields { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, List<string>> FieldChoices { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    private List<string> UnmappedLabels { get; set; } = new();
+
+    private Guid AccountId => Guid.TryParse(SelectedCustomerIdValue, out var id) ? id : Guid.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var email = SiteReportAccess.FindEmail(state.User) ?? Session.Email;
+        EmployeeAllowed = SiteReportAccess.IsEmployee(email ?? "");
+        if (!EmployeeAllowed)
+            return;
+
+        EnsureFieldKeys();
+        try
+        {
+            Customers = await AssessmentApi.GetCustomersAsync() ?? new();
+        }
+        catch (Exception ex) when (ApiTokenHandler.IsConsentChallenge(ex))
+        {
+            Nav.NavigateTo("/MicrosoftIdentity/Account/SignIn", forceLoad: true);
+            return;
+        }
+        catch (Exception ex)
+        {
+            StatusIsError = true;
+            Status = ex.Message;
+        }
+
+        if (CustomerIdFromQuery is Guid id && id != Guid.Empty)
+        {
+            SelectedCustomerIdValue = id.ToString();
+            await LoadAsync();
+        }
+    }
+
+    private void EnsureFieldKeys()
+    {
+        foreach (var field in OnboardingCatalog.InputFields)
+            Fields.TryAdd(field.Key, "");
+    }
+
+    private async Task LoadAsync()
+    {
+        Status = null;
+        StatusIsError = false;
+        ContactCardBlob = null;
+        EnsureFieldKeys();
+        if (AccountId == Guid.Empty)
+            return;
+
+        foreach (var field in OnboardingCatalog.InputFields)
+            Fields[field.Key] = "";
+        FieldChoices = new(StringComparer.OrdinalIgnoreCase);
+
+        try
+        {
+            var document = await OnboardingApi.GetAsync(AccountId);
+            foreach (var field in OnboardingCatalog.InputFields)
+            {
+                document.Fields.TryGetValue(field.Key, out var value);
+                Fields[field.Key] = value ?? "";
+            }
+
+            ContactCardBlob = document.ContactCardBlob;
+            UnmappedLabels = document.UnmappedLabels ?? new();
+            FieldChoices = document.FieldChoices ?? new(StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            StatusIsError = true;
+            Status = ex.Message;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (AccountId == Guid.Empty || Busy)
+            return;
+
+        Busy = true;
+        Status = null;
+        try
+        {
+            var saved = await OnboardingApi.SaveAsync(AccountId, new PartnerOnboardingSaveRequest
+            {
+                Fields = Fields,
+                UpdatedBy = Session.Email
+            });
+            StatusIsError = !string.IsNullOrWhiteSpace(saved.CrmWarning);
+            Status = string.IsNullOrWhiteSpace(saved.CrmWarning)
+                ? "Account information saved to Dynamics."
+                : saved.CrmWarning;
+        }
+        catch (Exception ex)
+        {
+            StatusIsError = true;
+            Status = ex.Message;
+        }
+        finally
+        {
+            Busy = false;
+        }
+    }
+
+    private IEnumerable<string> ChoicesFor(OnboardingField field)
+    {
+        var list = new List<string> { "" };
+        list.AddRange(ChoiceLabels(field));
+        var current = Fields.GetValueOrDefault(field.Key);
+        if (!string.IsNullOrWhiteSpace(current) && !list.Contains(current, StringComparer.OrdinalIgnoreCase))
+            list.Add(current);
+        return list;
+    }
+
+    private List<string> ChoiceLabels(OnboardingField field)
+    {
+        if (field.Kind == OnboardingKind.YesNo)
+            return ["Yes", "No"];
+
+        if (FieldChoices.TryGetValue(field.Key, out var crm) && crm.Count > 0)
+            return crm;
+
+        return field.Input is OnboardingInput.Designation or OnboardingInput.CspType or OnboardingInput.Status or OnboardingInput.Territory
+            ? OnboardingCatalog.Choices(field.Input).Where(choice => choice.Length > 0).ToList()
+            : [];
+    }
+
+    private bool IsChosen(string key, string choice)
+    {
+        var current = Fields.GetValueOrDefault(key) ?? "";
+        return SplitChoices(current).Any(part => string.Equals(part, choice, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void ToggleChoice(string key, string choice, ChangeEventArgs args)
+    {
+        var selected = SplitChoices(Fields.GetValueOrDefault(key) ?? "");
+        var on = args.Value is bool value && value;
+        if (on)
+        {
+            if (!selected.Any(part => string.Equals(part, choice, StringComparison.OrdinalIgnoreCase)))
+                selected.Add(choice);
+        }
+        else
+        {
+            selected.RemoveAll(part => string.Equals(part, choice, StringComparison.OrdinalIgnoreCase));
+        }
+
+        Fields[key] = string.Join("; ", selected);
+    }
+
+    private static List<string> SplitChoices(string value) =>
+        value.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+    private static string? AsDateText(object? value) => value switch
+    {
+        DateTime date => date.ToString("yyyy-MM-dd"),
+        DateOnly date => date.ToString("yyyy-MM-dd"),
+        _ => value?.ToString()
+    };
+
+    private async Task CreateFolderAsync()
+    {
+        if (AccountId == Guid.Empty || Busy)
+            return;
+
+        Busy = true;
+        Status = null;
+        try
+        {
+            var result = await OnboardingApi.CreateContactCardAsync(AccountId, Session.Email);
+            ContactCardBlob = result.BlobName;
+            StatusIsError = false;
+            Status = $"Customer folder saved as {result.BlobName}.";
+        }
+        catch (Exception ex)
+        {
+            StatusIsError = true;
+            Status = ex.Message;
+        }
+        finally
+        {
+            Busy = false;
+        }
+    }
+}

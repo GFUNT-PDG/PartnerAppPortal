@@ -1,9 +1,10 @@
 @page "/dashboard/partner"
+@layout PartnerAppPortal.Portal.Shared.PartnerLayout
 @using PartnerAppPortal.Core.Models.Crm
 @using PartnerAppPortal.Portal.Services
 
 <div class="portal-page partner-portal partner-app-board">
-    <div class="app-board-banner">Partner Portal</div>
+    <h1 class="portal-title">Partner Portal</h1>
 
     @if (!string.IsNullOrEmpty(LoadError))
     {
@@ -28,33 +29,35 @@
         <div class="app-board-welcome">Welcome : <strong>@Customer.Name</strong></div>
         <p class="partner-section-note">Your apps for this account. Hover a tile for a preview.</p>
 
-        <div class="app-board-grid">
-            @foreach (var tile in Tiles)
-            {
-                <a class="app-board-tile @(tile.IsTeams ? "app-board-tile-teams" : "")"
-                   href="@tile.Href"
-                   aria-label="@tile.Title">
-                    <span class="app-board-tile-title">@tile.Title</span>
-                    <span class="app-board-tile-cta">@tile.Cta</span>
-                    @if (tile.IsTeams)
+        @foreach (var group in Groups)
+        {
+            <section class="app-board-group">
+                <h2 class="app-board-group-title">@group.Title</h2>
+                <div class="app-board-grid @(group.Wide ? "app-board-grid-4" : null)">
+                    @foreach (var tile in group.Tiles)
                     {
-                        <span class="app-board-tile-badge">Chat</span>
+                        <a class="app-board-tile"
+                           href="@tile.Href"
+                           aria-label="@tile.Title">
+                            <span class="app-board-tile-title">@tile.Title</span>
+                            <span class="app-board-tile-cta">@tile.Cta</span>
+                            <span class="hot-list-preview app-board-preview" aria-hidden="true">
+                                <span class="hot-list-preview-chrome">
+                                    <span></span><span></span><span></span>
+                                </span>
+                                <span class="hot-list-preview-body">
+                                    <span class="hot-list-preview-title">@tile.Title</span>
+                                    <span class="hot-list-preview-banner">@tile.PreviewBanner</span>
+                                    <span class="hot-list-preview-line"></span>
+                                    <span class="hot-list-preview-line short"></span>
+                                    <span class="hot-list-preview-line"></span>
+                                </span>
+                            </span>
+                        </a>
                     }
-                    <span class="hot-list-preview app-board-preview" aria-hidden="true">
-                        <span class="hot-list-preview-chrome">
-                            <span></span><span></span><span></span>
-                        </span>
-                        <span class="hot-list-preview-body">
-                            <span class="hot-list-preview-title">@tile.Title</span>
-                            <span class="hot-list-preview-banner">@tile.PreviewBanner</span>
-                            <span class="hot-list-preview-line"></span>
-                            <span class="hot-list-preview-line short"></span>
-                            <span class="hot-list-preview-line"></span>
-                        </span>
-                    </span>
-                </a>
-            }
-        </div>
+                </div>
+            </section>
+        }
     }
 </div>
 
@@ -71,7 +74,7 @@
     private bool _loading = true;
     private string? LoadError { get; set; }
     private Customer? Customer { get; set; }
-    private List<AppTile> Tiles { get; set; } = new();
+    private List<AppGroup> Groups { get; set; } = new();
     private string? Email { get; set; }
 
     private sealed class AppTile
@@ -80,7 +83,13 @@
         public string Href { get; set; } = "";
         public string Cta { get; set; } = "Open";
         public string PreviewBanner { get; set; } = "Open module";
-        public bool IsTeams { get; set; }
+    }
+
+    private sealed class AppGroup
+    {
+        public string Title { get; set; } = "";
+        public bool Wide { get; set; }
+        public List<AppTile> Tiles { get; set; } = new();
     }
 
     protected override async Task OnInitializedAsync()
@@ -108,63 +117,88 @@
                 return;
             }
 
-            Tiles =
-            [
-                new AppTile
+            var portals = new List<AppTile>
+            {
+                new()
                 {
-                    Title = "Assessment Portal",
+                    Title = "Partner Assessment Portal",
                     Href = PartnerNav.Assessment(id, Email),
                     Cta = "View scores",
                     PreviewBanner = "Assessment results"
-                },
-                new AppTile
-                {
-                    Title = "Designations Hot List",
-                    Href = PartnerNav.Designations(id, Email),
-                    Cta = "View targets",
-                    PreviewBanner = "Target designations"
-                },
-                new AppTile
-                {
-                    Title = "Action Plans",
-                    Href = PartnerNav.ActionPlans(id, Email),
-                    Cta = "View plans",
-                    PreviewBanner = "Under construction"
-                },
-                new AppTile
-                {
-                    Title = "Teams Channel",
-                    Href = PartnerNav.Teams(id, Email),
-                    Cta = "Open chat",
-                    PreviewBanner = "Chat placeholder",
-                    IsTeams = true
-                },
-                new AppTile
-                {
-                    Title = "Partner Progress Tracker",
-                    Href = PartnerNav.Progress(id, Email),
-                    Cta = "View progress",
-                    PreviewBanner = "Roadmaps & tasks"
-                },
-                new AppTile
-                {
-                    Title = "Document Library",
-                    Href = PartnerNav.Documents(id, Email),
-                    Cta = "View files",
-                    PreviewBanner = "Teams Files / Shared"
-                },
-            ];
-
+                }
+            };
             if (Customer.SalesAcceleratorAccess)
             {
-                Tiles.Add(new AppTile
+                portals.Add(new AppTile
                 {
-                    Title = "Sales Accelerator Account Portal",
+                    Title = "Sales Accelerator Portal",
                     Href = PartnerNav.SalesAccelerator(id, Email),
                     Cta = "Submit leads",
                     PreviewBanner = "CSV lead intake"
                 });
             }
+
+            Groups =
+            [
+                new AppGroup { Title = "Portals", Tiles = portals },
+                new AppGroup
+                {
+                    Title = "Pages",
+                    Tiles =
+                    [
+                        new AppTile
+                        {
+                            Title = "Partner Success Plan",
+                            Href = PartnerNav.SuccessPlan(id, Email),
+                            Cta = "View plan",
+                            PreviewBanner = "Success plan"
+                        },
+                        new AppTile
+                        {
+                            Title = "Marketplace Maturity Score",
+                            Href = PartnerNav.MarketplaceMaturity(id, Email),
+                            Cta = "View score",
+                            PreviewBanner = "Marketplace maturity"
+                        }
+                    ]
+                },
+                new AppGroup
+                {
+                    Title = "Documents",
+                    Wide = true,
+                    Tiles =
+                    [
+                        new AppTile
+                        {
+                            Title = "Document Library",
+                            Href = PartnerNav.Documents(id, Email),
+                            Cta = "View files",
+                            PreviewBanner = "Teams Files / Shared"
+                        },
+                        new AppTile
+                        {
+                            Title = "WinWire Library",
+                            Href = PartnerNav.WinWire(id, Email),
+                            Cta = "View files",
+                            PreviewBanner = "Sales Artifacts / Winwires"
+                        },
+                        new AppTile
+                        {
+                            Title = "SuperPower Slide",
+                            Href = PartnerNav.SuperPowerSlide(id, Email),
+                            Cta = "View slide",
+                            PreviewBanner = "PDF / PowerPoint"
+                        },
+                        new AppTile
+                        {
+                            Title = "Sales One-Pager",
+                            Href = PartnerNav.SalesOnePager(id, Email),
+                            Cta = "View overview",
+                            PreviewBanner = "Partner Pitch"
+                        }
+                    ]
+                }
+            ];
         }
         catch (Exception ex)
         {

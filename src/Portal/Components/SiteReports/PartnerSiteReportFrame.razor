@@ -1,0 +1,117 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Identity.Web
+@using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Portal.Services
+@inject AuthenticationStateProvider AuthState
+@inject TeamsGraphClient Teams
+@inject SiteReportFiles Files
+@inject NavigationManager Nav
+
+@if (_loading)
+{
+    <p class="partner-section-note">Loading report...</p>
+}
+else if (_needsConsent)
+{
+    <div class="uc-banner">@_error</div>
+    <p class="partner-section-note">
+        <a class="btn btn-primary portal-btn" href="@ConnectHref">Connect Teams files</a>
+    </p>
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div class="uc-banner">@_error</div>
+}
+else if (_srcDoc is not null)
+{
+    <iframe class="site-report-frame"
+            title="@Title"
+            sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-downloads"
+            srcdoc="@_srcDoc"></iframe>
+}
+
+@code {
+    [Parameter] public Customer Customer { get; set; } = default!;
+    [Parameter] public string ReportKey { get; set; } = SiteReportFiles.SuccessPlan;
+    [Parameter] public string Title { get; set; } = "Site report";
+    [Parameter] public string NotPublishedMessage { get; set; } = "This report has not been published for this account yet.";
+
+    private bool _loading = true;
+    private bool _needsConsent;
+    private string? _srcDoc;
+    private string? _error;
+
+    private string ConnectHref
+    {
+        get
+        {
+            var returnUrl = Nav.ToBaseRelativePath(Nav.Uri);
+            if (string.IsNullOrWhiteSpace(returnUrl))
+                returnUrl = "/dashboard/partner";
+            if (!returnUrl.StartsWith('/'))
+                returnUrl = "/" + returnUrl;
+            return $"/partner/teams/connect?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _srcDoc = null;
+        _error = null;
+        _needsConsent = false;
+
+        try
+        {
+            if (Customer is null || string.IsNullOrWhiteSpace(Customer.Name) || Customer.Id == Guid.Empty)
+            {
+                _error = "Partner account could not be resolved.";
+                return;
+            }
+
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var relative = Files.RelativePathFor(ReportKey, Customer.Name);
+            var file = await Teams.DownloadAccountFileByPathAsync(Customer.Name, relative, auth.User);
+            if (file is null || file.Bytes.Length == 0)
+            {
+                _error = NotPublishedMessage;
+                return;
+            }
+
+            var html = System.Text.Encoding.UTF8.GetString(file.Bytes);
+            _srcDoc = SiteReportFiles.PrepareForFrame(
+                html,
+                Files.AssetBaseHref(Customer.Id, ReportKey, Customer.Name));
+        }
+        catch (Exception ex)
+        {
+            if (IsConsentChallenge(ex))
+            {
+                _needsConsent = true;
+                _error = "Teams file access needs permission for this sign-in. Click Connect Teams files to approve, then return here.";
+            }
+            else
+            {
+                _error = "This report could not be opened. " + Detail(ex);
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string Detail(Exception ex)
+    {
+        var inner = ex;
+        while (inner.InnerException != null)
+            inner = inner.InnerException;
+        return inner.Message;
+    }
+
+    private static bool IsConsentChallenge(Exception ex) =>
+        ex is MicrosoftIdentityWebChallengeUserException
+        || ex.InnerException is MicrosoftIdentityWebChallengeUserException
+        || ex.Message.Contains("MsalUiRequiredException", StringComparison.OrdinalIgnoreCase)
+        || (ex.InnerException?.Message.Contains("MsalUiRequiredException", StringComparison.OrdinalIgnoreCase) ?? false);
+}

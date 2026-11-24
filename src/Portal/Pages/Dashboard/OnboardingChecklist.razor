@@ -1,0 +1,143 @@
+@using PartnerAppPortal.Core.Models.Onboarding
+@inject IOnboardingApiClient OnboardingApi
+@inject PortalSession Session
+
+<section class="onboarding-checklist">
+    <div class="onboarding-checklist-head">
+        <h3 class="portal-section-title">Activity Checklist</h3>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(View?.EngagementType) || !string.IsNullOrWhiteSpace(View?.EngagementStart))
+    {
+        <p class="partner-section-note">
+            @View!.EngagementType
+            @if (!string.IsNullOrWhiteSpace(View.EngagementStart))
+            {
+                <span> · Start @View.EngagementStart</span>
+            }
+        </p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <p class="text-danger">@Error</p>
+    }
+
+    @if (View is null)
+    {
+        <p class="partner-section-note">Loading checklist…</p>
+    }
+    else
+    {
+        <div class="activity-progress"
+             role="progressbar"
+             aria-valuenow="@View.PercentComplete"
+             aria-valuemin="0"
+             aria-valuemax="100"
+             aria-label="Checklist percent complete">
+            <div class="activity-progress-fill" style="width:@(View.PercentComplete)%"></div>
+            <span class="activity-progress-label">@View.ItemsComplete / @View.Items.Count · @View.PercentComplete% complete</span>
+        </div>
+
+        <div class="activity-row">
+            @foreach (var item in View.Items)
+            {
+                var followsForm = string.Equals(item.Key, OnboardingCatalog.AllDynamicsDetailsKey, StringComparison.OrdinalIgnoreCase);
+                var complete = string.Equals(item.Value, "Yes", StringComparison.OrdinalIgnoreCase);
+                <div class="activity-item">
+                    <div class="activity-pill @(complete ? "is-complete" : "is-open")">
+                        @if (complete)
+                        {
+                            <span class="activity-pill-check" aria-hidden="true">✓</span>
+                        }
+                        <span>@item.Label</span>
+                    </div>
+                    <label class="activity-switch @(followsForm ? "is-locked" : null)">
+                        <input type="checkbox"
+                               checked="@complete"
+                               disabled="@(followsForm || IsBusy(item.Key))"
+                               aria-label="@item.Label"
+                               @onchange="e => OnSwitchAsync(item.Key, e.Value)" />
+                        <span class="activity-switch-ui" aria-hidden="true"></span>
+                    </label>
+                    @if (followsForm && !View.DynamicsDetailsComplete)
+                    {
+                        <p class="activity-item-note">Turns on when the onboarding form is complete.</p>
+                    }
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter] public Guid AccountId { get; set; }
+
+    private PartnerOnboardingChecklistView? View { get; set; }
+    private string? Error { get; set; }
+    private string? BusyKey { get; set; }
+    private Guid _loadedId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AccountId == Guid.Empty || AccountId == _loadedId)
+            return;
+
+        _loadedId = AccountId;
+        View = null;
+        Error = null;
+        await LoadAsync();
+    }
+
+    private bool IsBusy(string key) => string.Equals(BusyKey, key, StringComparison.OrdinalIgnoreCase);
+
+    private static bool SwitchIsOn(object? value) =>
+        value is bool on ? on : string.Equals(value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+
+    private Task OnSwitchAsync(string key, object? value) =>
+        UpdateAsync(key, SwitchIsOn(value) ? "Yes" : "No");
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            var document = await OnboardingApi.GetAsync(AccountId);
+            View = OnboardingCatalog.ToChecklistView(document);
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+    }
+
+    private async Task UpdateAsync(string key, string? value)
+    {
+        if (View is null || IsBusy(key))
+            return;
+
+        var current = View.Items.FirstOrDefault(item => item.Key == key)?.Value ?? "";
+        var next = OnboardingCatalog.NormalizeYesNo(value);
+        if (string.Equals(current, next, StringComparison.Ordinal))
+            return;
+
+        BusyKey = key;
+        Error = null;
+        try
+        {
+            View = await OnboardingApi.UpdateChecklistItemAsync(AccountId, new ChecklistItemUpdate
+            {
+                Key = key,
+                Value = next,
+                UpdatedBy = Session.Email
+            });
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+        finally
+        {
+            BusyKey = null;
+        }
+    }
+}

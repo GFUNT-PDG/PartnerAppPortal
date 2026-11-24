@@ -1,11 +1,12 @@
 @page "/partner/assessment"
 @using PartnerAppPortal.Core.Models.Assessments
 @using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Portal.Components.SiteReports
 @using PartnerAppPortal.Portal.Services
 
 <div class="portal-page partner-portal">
     <div class="eyebrow">Partner Portal</div>
-    <h1 class="portal-title">Assessment Portal</h1>
+    <h1 class="portal-title">Partner Assessment Portal</h1>
 
     @if (!string.IsNullOrEmpty(LoadError))
     {
@@ -31,6 +32,14 @@
         <p class="partner-section-note">
             <a href="@PartnerNav.AppBoard(Customer.Id)">← Back to App Board</a>
         </p>
+
+        <section class="partner-section progress-page">
+            <h2 class="portal-section-title">Assessment Health</h2>
+            <PartnerSiteReportFrame Customer="Customer"
+                                    ReportKey="@SiteReportFiles.AssessmentHealth"
+                                    Title="Assessment Health"
+                                    NotPublishedMessage="The assessment health report has not been published for this account yet." />
+        </section>
 
         <section class="partner-section">
             <h2 class="portal-section-title">Assessment Scores</h2>
@@ -341,7 +350,7 @@
 
         return new ProgressCompareModel
         {
-            InitialDate = first.SubmittedAt?.ToString("MM/dd/yyyy") ?? "Onboarding",
+            InitialDate = submitted.Min(a => a.OnboardingAt ?? a.SubmittedAt)?.ToString("MM/dd/yyyy") ?? "Onboarding",
             LatestDate = latest.SubmittedAt?.ToString("MM/dd/yyyy") ?? "Current",
             InitialOverall = onboardingOverall,
             LatestOverall = currentOverall,

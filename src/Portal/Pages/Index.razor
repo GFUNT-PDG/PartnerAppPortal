@@ -1,60 +1,40 @@
 @page "/"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using PartnerAppPortal.Portal.Services
 @inject IAssessmentApiClient AssessmentApi
+@inject AuthenticationStateProvider AuthState
 
 <div class="landing">
-    <h1 class="landing-title">Partner Assessment Application</h1>
-    <p class="landing-subtitle">Welcome, to begin please log in below.</p>
+    <h1 class="landing-title">The PDG Partner Hub</h1>
+    <p class="landing-subtitle">@(_busy ? "Signing you in..." : "Your Microsoft Partner Growth Platform")</p>
 
-    <div class="landing-login">
-        <label class="landing-label" for="loginEmail">Email address</label>
-        <input id="loginEmail"
-               @bind="Email"
-               @bind:event="oninput"
-               type="email"
-               class="form-control landing-input"
-               placeholder="name@company.com"
-               autocomplete="email"
-               inputmode="email"
-               disabled="@_busy" />
-
-        <button type="button" class="btn btn-primary landing-btn" @onclick="HandleLogin" disabled="@_busy">
-            @(_busy ? "Checking..." : "Get Started")
-        </button>
-
-        @if (!string.IsNullOrEmpty(Message))
-        {
-            <p class="landing-error">@Message</p>
-        }
-    </div>
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <p class="landing-error">@Message</p>
+        <a class="btn btn-primary landing-btn" href="MicrosoftIdentity/Account/SignOut">Sign out</a>
+    }
 </div>
 
 @code {
     [Inject] NavigationManager Nav { get; set; } = default!;
     [Inject] PortalSession Session { get; set; } = default!;
 
-    private string Email { get; set; } = string.Empty;
     private string? Message { get; set; }
-    private bool _busy;
+    private bool _busy = true;
 
-    private async Task HandleLogin()
+    protected override async Task OnInitializedAsync()
     {
-        Message = null;
-
-        if (string.IsNullOrWhiteSpace(Email))
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var email = FindEmail(auth.User);
+        if (string.IsNullOrWhiteSpace(email))
         {
-            Message = "Enter your email to continue.";
+            _busy = false;
+            Message = "The Microsoft account did not include an email address.";
             return;
         }
 
-        var email = Email.Trim();
-        if (!IsValidEmail(email))
-        {
-            Message = "Enter a valid email address (example: name@company.com).";
-            return;
-        }
-
-        // Employee domain → employee portal
         if (email.EndsWith("@partnerdevelopmentgroup.com", StringComparison.OrdinalIgnoreCase) ||
             email.EndsWith("@pdg.com", StringComparison.OrdinalIgnoreCase))
         {
@@ -63,16 +43,14 @@
             return;
         }
 
-        // Partner domain must match a CrmAccounts.Email domain
-        _busy = true;
         try
         {
             var customer = await AssessmentApi.FindCustomerByEmailAsync(email);
             if (customer is null || customer.Id == Guid.Empty)
             {
-                Message = "No partner account found for that email. " +
-                          "Your CRM sync must store the contact email in CrmAccounts.Email " +
-                          "or CrmContacts.Email for this domain.";
+                _busy = false;
+                Message = "No partner account found for " + email + ". " +
+                          "The CRM sync must store that email on the account or a contact.";
                 return;
             }
 
@@ -81,24 +59,16 @@
         }
         catch (Exception ex)
         {
-            Message = $"Could not verify partner login: {ex.Message}";
-        }
-        finally
-        {
             _busy = false;
+            Message = $"Could not verify partner login: {ex.Message}";
         }
     }
 
-    private static bool IsValidEmail(string email)
+    private static string? FindEmail(ClaimsPrincipal user)
     {
-        try
-        {
-            var addr = new System.Net.Mail.MailAddress(email);
-            return string.Equals(addr.Address, email, StringComparison.OrdinalIgnoreCase);
-        }
-        catch
-        {
-            return false;
-        }
+        return user.FindFirst("preferred_username")?.Value
+            ?? user.FindFirst("email")?.Value
+            ?? user.FindFirst(ClaimTypes.Upn)?.Value
+            ?? user.FindFirst(ClaimTypes.Email)?.Value;
     }
 }

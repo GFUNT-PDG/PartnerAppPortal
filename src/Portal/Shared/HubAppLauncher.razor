@@ -1,0 +1,179 @@
+@using Microsoft.AspNetCore.Components.Routing
+@using PartnerAppPortal.Portal.Services
+@implements IDisposable
+@inject PortalSession Session
+@inject NavigationManager Nav
+
+<div class="waffle-root">
+    <button type="button" class="waffle-btn" aria-label="PDG Hub apps" popovertarget="pdg-hub-apps" popovertargetaction="toggle">
+        <span class="waffle-grid" aria-hidden="true">
+            @for (var dot = 0; dot < 9; dot++)
+            {
+                <i></i>
+            }
+        </span>
+    </button>
+    <div id="pdg-hub-apps" class="waffle-panel" popover="auto" aria-label="PDG Hub apps">
+        @foreach (var section in Sections)
+        {
+            <p class="waffle-group">@section.Title</p>
+            <div class="waffle-grid-apps">
+                @foreach (var app in section.Apps)
+                {
+                    <a class="waffle-app" href="@app.Href" target="@app.Target" rel="@app.Rel">
+                        <span class="waffle-app-icon" style="background:@app.Color">@Icon(app.Icon)</span>
+                        <span class="waffle-app-name">@app.Name</span>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private Guid CustomerId { get; set; }
+
+    private IReadOnlyList<HubApp> EmployeeApps =>
+    [
+        new("Assessment Portal", "/dashboard/employee", "#C2A761", "score"),
+        new("Onboarding", CustomerPath("/employee/onboarding"), "#80ba01", "badge"),
+        new("Sales Accelerator", "/employee/sales-accelerator", "#02a4ef", "rocket"),
+        new("Technical Library", "/employee/technical-library", "#1b1b1b", "book"),
+        new("Intro Report", "/employee/intro-report", "#594618", "chart")
+    ];
+
+    private IReadOnlyList<HubApp> PartnerApps =>
+    [
+        new("Partner Portal", PartnerNav.AppBoard(CustomerOrNull, Session.Email), "#a18a4a", "grid"),
+        new("Assessment", PartnerNav.Assessment(CustomerOrNull, Session.Email), "#C2A761", "score"),
+        new("Documents", PartnerNav.Documents(CustomerOrNull, Session.Email), "#0286c4", "folder"),
+        new("WinWire", PartnerNav.WinWire(CustomerOrNull, Session.Email), "#0286c4", "folder"),
+        new("Success Plan", PartnerNav.SuccessPlan(CustomerOrNull, Session.Email), "#6d9f00", "plan"),
+        new("Action Plans", PartnerNav.ActionPlans(CustomerOrNull, Session.Email), "#54595f", "check"),
+        new("Super Power Slide", PartnerNav.SuperPowerSlide(CustomerOrNull, Session.Email), "#f25125", "slide"),
+        new("Marketplace Maturity", PartnerNav.MarketplaceMaturity(CustomerOrNull, Session.Email), "#9a7b38", "store"),
+        new("Sales One Pager", PartnerNav.SalesOnePager(CustomerOrNull, Session.Email), "#33322d", "page"),
+        new("Designations", PartnerNav.Designations(CustomerOrNull, Session.Email), "#594618", "medal"),
+        new("Teams", PartnerNav.Teams(CustomerOrNull, Session.Email), "#02a4ef", "chat")
+    ];
+
+    private IReadOnlyList<HubApp> ProductivityApps =>
+    [
+        new("Outlook", "https://outlook.office.com/mail/", "#0F6CBD", "outlook", true),
+        new("OneDrive", "https://www.office.com/launch/onedrive", "#1485D4", "cloud", true),
+        new("Word", "https://www.office.com/launch/word", "#185ABD", "word", true),
+        new("Excel", "https://www.office.com/launch/excel", "#107C41", "excel", true),
+        new("PowerPoint", "https://www.office.com/launch/powerpoint", "#C43E1C", "ppt", true),
+        new("OneNote", "https://www.office.com/launch/onenote", "#7719AA", "note", true),
+        new("SharePoint", "https://www.office.com/launch/sharepoint", "#038387", "share", true),
+        new("Teams", "https://teams.microsoft.com/", "#4B53BC", "teams", true),
+        new("Viva", "https://viva.cloud.microsoft/", "#5B5FC7", "viva", true),
+        new("Power Automate", "https://make.powerautomate.com/", "#0066FF", "flow", true),
+        new("Power Platform", "https://make.powerapps.com/", "#00A4A6", "platform", true),
+        new("Copilot Studio", "https://copilotstudio.microsoft.com/", "#0E7C86", "copilot", true),
+        new("Fabric", "https://app.fabric.microsoft.com/", "#0F9D7A", "fabric", true),
+        new("Azure Portal", "https://portal.azure.com/", "#0078D4", "azure", true),
+        new("Entra", "https://entra.microsoft.com/", "#005BA1", "entra", true),
+        new("Partner Center", "https://partner.microsoft.com/dashboard", "#1B1B1B", "partner", true)
+    ];
+
+    private IReadOnlyList<(string Title, IReadOnlyList<HubApp> Apps)> Sections =>
+    [
+        ("Employee", EmployeeApps),
+        ("Partner", PartnerApps),
+        ("Productivity", ProductivityApps)
+    ];
+
+    private Guid? CustomerOrNull => CustomerId == Guid.Empty ? null : CustomerId;
+
+    protected override void OnInitialized()
+    {
+        Session.Changed += OnSessionChanged;
+        Nav.LocationChanged += OnLocationChanged;
+        ReadCustomer();
+    }
+
+    private void OnSessionChanged()
+    {
+        ReadCustomer();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        ReadCustomer();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ReadCustomer()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("customerId", out var value) && Guid.TryParse(value, out var id))
+            CustomerId = id;
+        else if (Session.CustomerId is Guid remembered)
+            CustomerId = remembered;
+    }
+
+    private string CustomerPath(string path) =>
+        CustomerId == Guid.Empty ? path : $"{path}?customerId={CustomerId}";
+
+    public void Dispose()
+    {
+        Session.Changed -= OnSessionChanged;
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+
+    private sealed record HubApp(string Name, string Href, string Color, string Icon, bool External = false)
+    {
+        public string? Target => External ? "_blank" : null;
+        public string? Rel => External ? "noopener noreferrer" : null;
+    }
+
+    private static RenderFragment Icon(string name) => builder =>
+    {
+        builder.OpenElement(0, "svg");
+        builder.AddAttribute(1, "viewBox", "0 0 24 24");
+        builder.AddAttribute(2, "aria-hidden", "true");
+        builder.AddMarkupContent(3, Glyph(name));
+        builder.CloseElement();
+    };
+
+    private static string Letter(string letter) =>
+        $"<text x=\"12\" y=\"16.5\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\" font-family=\"Segoe UI, Arial, sans-serif\">{letter}</text>";
+
+    private static string Glyph(string name) => name switch
+    {
+        "score" => "<path d=\"M4 16h3v4H4zm5-6h3v10H9zm5-4h3v14h-3z\"/>",
+        "badge" => "<path d=\"M12 2l2.2 4.6L19 8l-3.5 3.4.8 4.8L12 14.8 7.7 16.2l.8-4.8L5 8l4.8-1.4z\"/>",
+        "rocket" => "<path d=\"M12 2c3 3 4 7 4 10l-3 1-1 3-3-3 1-3-3-1c0-3 2-7 5-7zm-6 12l2 2-3 4-1-1 2-5zm10 2l2-2 2 5-1 1-3-4z\"/>",
+        "book" => "<path d=\"M5 4h9a3 3 0 013 3v13H8a3 3 0 01-3-3V4zm3 3v2h7V7H8z\"/>",
+        "chart" => "<path d=\"M4 19V5h2v14H4zm4 0V9h2v10H8zm4 0v-6h2v6h-2zm4 0V7h2v12h-2z\"/>",
+        "grid" => "<path d=\"M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z\"/>",
+        "folder" => "<path d=\"M3 6h7l2 2h9v10H3V6z\"/>",
+        "plan" => "<path d=\"M7 3h10v18H7V3zm2 4h6v2H9V7zm0 4h6v2H9v-2zm0 4h4v2H9v-2z\"/>",
+        "check" => "<path d=\"M5 4h14v16H5V4zm2.2 8.1l2.4 2.4 5.4-5.6 1.5 1.4-6.9 7.1-3.9-3.9z\"/>",
+        "slide" => "<path d=\"M3 5h18v11H3V5zm7 13h4v2h-4v-2z\"/>",
+        "store" => "<path d=\"M4 9l1.5-4h13L20 9H4zm1 2h4v8H5v-8zm6 0h3v8h-3v-8zm5 0h3v8h-3v-8z\"/>",
+        "page" => "<path d=\"M6 3h12v18H6V3zm2 4h8v2H8V7zm0 4h8v2H8v-2zm0 4h5v2H8v-2z\"/>",
+        "medal" => "<path d=\"M8 3h8l-1 6a4 4 0 11-6 0L8 3zm2 2l.6 3h2.8l.6-3H10z\"/>",
+        "chat" => "<path d=\"M4 5h16v10H8l-4 3V5z\"/>",
+        "outlook" => "<path d=\"M3 7.5 12 13l9-5.5V17a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7.5zm1.2-.8h15.6L12 11.2 4.2 6.7z\"/>",
+        "cloud" => "<path d=\"M8 17h8.2A3.3 3.3 0 0 0 17 10.6 4.6 4.6 0 0 0 8.4 9 3.4 3.4 0 0 0 8 17z\"/>",
+        "word" => Letter("W"),
+        "excel" => Letter("X"),
+        "ppt" => Letter("P"),
+        "note" => Letter("N"),
+        "share" => Letter("S"),
+        "azure" => Letter("A"),
+        "teams" => "<path d=\"M9 8.2a2.1 2.1 0 1 0 0-4.2 2.1 2.1 0 0 0 0 4.2zm5.2-.6a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4zM4.5 18v-1.1C4.5 14.6 6.4 13.4 9 13.4s4.5 1.2 4.5 3.5V18h-9zm8.2 0v-.9c0-1 .3-1.9 1-2.6.7.2 2.1.7 2.9 1.8.4.6.5 1.3.5 1.7V18h-4.4z\"/>",
+        "viva" => "<path d=\"M12 11.2a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM7.2 18v-1C7.2 14.8 9.2 13.6 12 13.6s4.8 1.2 4.8 3.4V18H7.2z\"/>",
+        "flow" => "<path d=\"M2.5 7h7.2L13 12l-3.3 5H2.5L6 12 2.5 7zm8 0h2.2L16 12l-3.3 5h-2.2L14 12l-3.5-5z\"/>",
+        "platform" => "<path d=\"M12 3.2 20 11l-8 9.8L4 11 12 3.2z\"/>",
+        "copilot" => "<path d=\"M6 5h7a2 2 0 0 1 2 2v5H8a2 2 0 0 1-2-2V5zm5 5h7v5a2 2 0 0 1-2 2h-5v-7z\"/>",
+        "fabric" => "<path d=\"M5 4h9l5 5v11H10L5 15V4zm8 1.6V9h3.4\"/>",
+        "entra" => "<path d=\"M12 3 19 6v6.2c0 4-2.7 6.8-7 8.6-4.3-1.8-7-4.6-7-8.6V6L12 3z\"/>",
+        "partner" => Letter("P"),
+        _ => "<circle cx=\"12\" cy=\"12\" r=\"6\"/>"
+    };
+}

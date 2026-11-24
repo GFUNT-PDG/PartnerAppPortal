@@ -1,0 +1,253 @@
+@page "/partner/winwire"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Identity.Web
+@using PartnerAppPortal.Core.Models.Crm
+@using PartnerAppPortal.Portal.Services
+
+<div class="portal-page partner-portal">
+    <div class="eyebrow">Partner Portal</div>
+    <h1 class="portal-title">WinWire Library</h1>
+
+    @if (_loading)
+    {
+        <p class="portal-subtitle">Loading WinWire library...</p>
+    }
+    else if (Customer is null)
+    {
+        <p class="portal-subtitle">Partner account could not be resolved.</p>
+        <div class="portal-panel">
+            <a class="btn btn-primary portal-btn" href="/">Return to login</a>
+        </div>
+    }
+    else
+    {
+        <p class="portal-subtitle">Winwires for <strong>@Customer.Name</strong></p>
+        <p class="partner-section-note">
+            <a href="@PartnerNav.AppBoard(Customer.Id)">← Back to App Board</a>
+        </p>
+
+        @if (_needsConsent)
+        {
+            <div class="uc-banner">@_error</div>
+            <p class="partner-section-note">
+                <a class="btn btn-primary portal-btn" href="@ConnectHref">Connect Teams files</a>
+            </p>
+        }
+        else if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="uc-banner">@_error</div>
+            <p class="partner-section-note">
+                <a class="btn btn-outline-primary portal-btn" href="@ConnectHref">Reconnect Teams</a>
+            </p>
+        }
+        else if (_folder is not null)
+        {
+            <p class="partner-section-note">
+                @_folder.TeamName / Sales Artifacts / Winwires
+                @if (!_folder.IsRoot)
+                {
+                    <text> / @_folder.FolderName</text>
+                }
+            </p>
+
+            <div class="doc-lib-toolbar">
+                @if (!_folder.IsRoot)
+                {
+                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="GoRootAsync">← Winwires root</button>
+                }
+                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="ReloadAsync" disabled="@_loading">Refresh</button>
+            </div>
+
+            @if (_folder.Items.Count == 0)
+            {
+                <div class="uc-banner">This folder is empty.</div>
+            }
+            else
+            {
+                <div class="portal-table-wrap">
+                    <table class="table align-middle doc-lib-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Modified</th>
+                                <th>Size</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _folder.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (item.IsFolder)
+                                        {
+                                            <button type="button" class="btn btn-link doc-lib-link" @onclick="() => OpenFolderAsync(item.Id)">
+                                                @item.Name
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            @item.Name
+                                        }
+                                    </td>
+                                    <td>@(item.IsFolder ? "Folder" : FileLabel(item))</td>
+                                    <td>@(item.LastModified?.ToLocalTime().ToString("MM/dd/yyyy h:mm tt") ?? "—")</td>
+                                    <td>@(item.IsFolder ? "—" : FormatSize(item.Size))</td>
+                                    <td class="assessment-actions">
+                                        @if (!item.IsFolder)
+                                        {
+                                            <a class="btn btn-outline-primary btn-sm"
+                                               href="@DownloadHref(item)"
+                                               target="_blank"
+                                               rel="noopener">Download</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
+    }
+</div>
+
+@code {
+    private const string RootPath = "Sales Artifacts/Winwires";
+
+    [Inject] SiteReportAccess Access { get; set; } = default!;
+    [Inject] TeamsGraphClient Teams { get; set; } = default!;
+    [Inject] AuthenticationStateProvider AuthState { get; set; } = default!;
+    [Inject] NavigationManager Nav { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "customerId")]
+    public Guid? CustomerIdFromQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "folderId")]
+    public string? FolderIdFromQuery { get; set; }
+
+    private bool _loading = true;
+    private bool _needsConsent;
+    private string? _error;
+    private Customer? Customer { get; set; }
+    private TeamsFolderListing? _folder;
+    private string? _rootId;
+
+    private string ConnectHref
+    {
+        get
+        {
+            var returnUrl = Nav.ToBaseRelativePath(Nav.Uri);
+            if (string.IsNullOrWhiteSpace(returnUrl))
+                returnUrl = "partner/winwire";
+            if (!returnUrl.StartsWith('/'))
+                returnUrl = "/" + returnUrl;
+            return $"/partner/teams/connect?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        _needsConsent = false;
+        _folder = null;
+
+        try
+        {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            Customer = await Access.ResolveAsync(auth.User, CustomerIdFromQuery);
+            if (Customer is null || string.IsNullOrWhiteSpace(Customer.Name))
+                return;
+
+            var root = await Teams.FindAccountFolderByPathAsync(Customer.Name, RootPath, auth.User);
+            if (root is null)
+            {
+                _error = "The Winwires folder has not been published for this account yet.";
+                return;
+            }
+
+            _rootId = root.Id;
+            _folder = await Teams.ListAccountFilesAsync(Customer.Name, auth.User, FolderIdFromQuery, root.Id);
+        }
+        catch (Exception ex)
+        {
+            if (IsConsentChallenge(ex))
+            {
+                _needsConsent = true;
+                _error = "Teams file access needs permission for this sign-in. Click Connect Teams files to approve, then return here.";
+            }
+            else
+            {
+                _error = Detail(ex);
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ReloadAsync() => await LoadAsync();
+
+    private async Task GoRootAsync()
+    {
+        if (Customer is null)
+            return;
+        Nav.NavigateTo(PartnerNav.WinWire(Customer.Id));
+        await Task.CompletedTask;
+    }
+
+    private async Task OpenFolderAsync(string folderId)
+    {
+        if (Customer is null || string.IsNullOrWhiteSpace(folderId))
+            return;
+
+        var href = PartnerNav.WinWire(Customer.Id) + "&folderId=" + Uri.EscapeDataString(folderId);
+        Nav.NavigateTo(href);
+        await Task.CompletedTask;
+    }
+
+    private string DownloadHref(TeamsDriveItem item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.DownloadUrl))
+            return item.DownloadUrl!;
+
+        return $"/partner/documents/file/{Customer!.Id}?driveId={Uri.EscapeDataString(item.DriveId)}&itemId={Uri.EscapeDataString(item.Id)}";
+    }
+
+    private static string FileLabel(TeamsDriveItem item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.MimeType))
+            return item.MimeType!;
+        var ext = Path.GetExtension(item.Name);
+        return string.IsNullOrWhiteSpace(ext) ? "File" : ext.Trim('.').ToUpperInvariant();
+    }
+
+    private static string FormatSize(long size)
+    {
+        if (size < 1024) return $"{size} B";
+        if (size < 1024 * 1024) return $"{size / 1024.0:0.#} KB";
+        return $"{size / (1024.0 * 1024.0):0.#} MB";
+    }
+
+    private static string Detail(Exception ex)
+    {
+        var inner = ex;
+        while (inner.InnerException != null)
+            inner = inner.InnerException;
+        return inner.Message;
+    }
+
+    private static bool IsConsentChallenge(Exception ex) =>
+        ex is MicrosoftIdentityWebChallengeUserException
+        || ex.InnerException is MicrosoftIdentityWebChallengeUserException
+        || ex.Message.Contains("MsalUiRequiredException", StringComparison.OrdinalIgnoreCase)
+        || (ex.InnerException?.Message.Contains("MsalUiRequiredException", StringComparison.OrdinalIgnoreCase) ?? false);
+}

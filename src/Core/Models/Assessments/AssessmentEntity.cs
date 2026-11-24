@@ -8,6 +8,9 @@ namespace PartnerAppPortal.Core.Models.Assessments
 
         public DateTimeOffset? SubmittedAt { get; set; }
 
+        /// <summary>Set once on first submit. Revisions do not change this.</summary>
+        public DateTimeOffset? OnboardingAt { get; set; }
+
         public string AnswersJson { get; set; } = string.Empty;
         public double TotalScore { get; set; }
 

@@ -26,7 +26,12 @@ namespace PartnerAppPortal.Portal.Services
         public static string Designations(Guid? customerId, string? email = null) => WithCustomer("/partner/designations", customerId, email);
         public static string ActionPlans(Guid? customerId, string? email = null) => WithCustomer("/partner/action-plans", customerId, email);
         public static string Progress(Guid? customerId, string? email = null) => WithCustomer("/partner/progress", customerId, email);
+        public static string SuccessPlan(Guid? customerId, string? email = null) => Progress(customerId, email);
         public static string Documents(Guid? customerId, string? email = null) => WithCustomer("/partner/documents", customerId, email);
+        public static string WinWire(Guid? customerId, string? email = null) => WithCustomer("/partner/winwire", customerId, email);
+        public static string SuperPowerSlide(Guid? customerId, string? email = null) => WithCustomer("/partner/super-power-slide", customerId, email);
+        public static string MarketplaceMaturity(Guid? customerId, string? email = null) => WithCustomer("/partner/marketplace-maturity", customerId, email);
+        public static string SalesOnePager(Guid? customerId, string? email = null) => WithCustomer("/partner/sales-one-pager", customerId, email);
         public static string Teams(Guid? customerId, string? email = null) => WithCustomer("/partner/teams", customerId, email);
         public static string SalesAccelerator(Guid? customerId, string? email = null) => WithCustomer("/partner/sales-accelerator", customerId, email);
     }

@@ -24,26 +24,8 @@
             <a href="@PartnerNav.AppBoard(Customer.Id)">← Back to App Board</a>
         </p>
         <p class="partner-section-note">
-            Embedded chat (history last 30 days) for this account’s assigned Teams channel will appear here.
-            Permissions are granted when the Team is created (Team name = CRM Account Name).
+            The channel for <strong>@Customer.Name</strong> stays open on the right while you move around the portal.
         </p>
-
-        <div class="teams-chat-placeholder" aria-label="Teams chat placeholder">
-            <div class="teams-chat-placeholder-header">
-                <span>Teams chat</span>
-                <span class="uc-pill">Placeholder</span>
-            </div>
-            <div class="teams-chat-placeholder-body">
-                <div class="uc-banner">Under construction — channel chat embed (30-day history)</div>
-                <p class="teams-chat-placeholder-hint">
-                    Future: Microsoft Graph + Entra External ID, locked to this partner’s channel only.
-                </p>
-            </div>
-            <div class="teams-chat-placeholder-composer">
-                <input type="text" class="form-control" placeholder="Message… (coming soon)" disabled />
-                <button type="button" class="btn btn-primary" disabled>Send</button>
-            </div>
-        </div>
     }
 </div>
 
